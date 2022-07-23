@@ -30,7 +30,7 @@ MODULES = ['defs', '_errors', '_objects', '_proxy', 'h5fd', 'h5z',
             'h5d', 'h5a', 'h5f', 'h5g',
             'h5l', 'h5o',
             'h5ds', 'h5ac',
-            'h5pl']
+            'h5pl', 'h5es']
 
 COMPILER_SETTINGS = {
    'libraries'      : ['hdf5', 'hdf5_hl'],

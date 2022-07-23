@@ -66,6 +66,25 @@ class Group(HLObject, MutableMappingHDF5):
             gid = h5g.create(self.id, name, lcpl=lcpl, gcpl=gcpl)
             return Group(gid)
 
+    def create_group_async(self, name, track_order=None, es_id=0):
+        """ Create and return a new subgroup.
+
+        Name may be absolute or relative.  Fails if the target name already
+        exists.
+
+        track_order
+            Track dataset/group/attribute creation order under this group
+            if True. If None use global default h5.get_config().track_order.
+        """
+        if track_order is None:
+            track_order = h5.get_config().track_order
+
+        with phil:
+            name, lcpl = self._e(name, lcpl=True)
+            gcpl = Group._gcpl_crt_order if track_order else None
+            gid = h5g.create_async(self.id, name, lcpl=lcpl, gcpl=gcpl, es_id=es_id)
+            return Group(gid)
+
     def create_dataset(self, name, shape=None, dtype=None, data=None, **kwds):
         """ Create a new HDF5 dataset
 

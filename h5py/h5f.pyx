@@ -419,7 +419,17 @@ cdef class FileID(GroupID):
             efree(obj_list)
 
     @with_phil
-    def reopen(self, int es_id=0):
+    def reopen(self):
+        """() => FileID
+
+        Retrieve another identifier for a file (which must still be open).
+        The new identifier is guaranteed to neither be mounted nor contain
+        a mounted file.
+        """
+        return FileID(H5Freopen(self.id))
+    
+    @with_phil
+    def reopen_async(self, int es_id=0):
         """() => FileID
 
         Retrieve another identifier for a file (which must still be open).
@@ -428,7 +438,6 @@ cdef class FileID(GroupID):
         """
         print("Using h5py with async HDF5 to reopen a file")
         return FileID(H5Freopen_async(self.id, es_id))
-    
     
 
     @with_phil

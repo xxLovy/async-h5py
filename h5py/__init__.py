@@ -53,7 +53,7 @@ _register_lzf()
 
 # --- Public API --------------------------------------------------------------
 
-from . import h5a, h5d, h5ds, h5f, h5fd, h5g, h5r, h5s, h5t, h5p, h5z, h5pl
+from . import h5a, h5d, h5ds, h5f, h5fd, h5g, h5r, h5s, h5t, h5p, h5z, h5pl, h5es
 
 from ._hl import filters
 from ._hl.base import is_hdf5, HLObject, Empty
@@ -62,6 +62,8 @@ from ._hl.files import (
     register_driver,
     unregister_driver,
     registered_drivers,
+    open_async,
+    reopen_async
 )
 from ._hl.group import Group, SoftLink, ExternalLink, HardLink
 from ._hl.dataset import Dataset
@@ -81,6 +83,9 @@ from .h5s import UNLIMITED
 
 from .version import version as __version__
 
+from ._hl.eventset import Es
+
+from .h5es import (create, wait, close)
 
 if version.hdf5_version_tuple[:3] >= get_config().vds_min_hdf5_version:
     from ._hl.vds import VirtualSource, VirtualLayout
