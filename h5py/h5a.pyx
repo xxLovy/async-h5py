@@ -35,7 +35,7 @@ import_array()
 @cython.binding(False)
 @with_phil
 def create(ObjectID loc not None, char* name, TypeID tid not None,
-    SpaceID space not None, *, char* obj_name='.', PropID lapl=None, int es_id=0):
+    SpaceID space not None, *, char* obj_name='.', PropID lapl=None, hid_t es_id=0):
     """(ObjectID loc, STRING name, TypeID tid, SpaceID space, **kwds) => AttrID
 
     Create a new attribute, attached to an existing object.
@@ -49,30 +49,31 @@ def create(ObjectID loc not None, char* name, TypeID tid not None,
     return AttrID(H5Acreate_by_name_async(loc.id, obj_name, name, tid.id,
             space.id, H5P_DEFAULT, H5P_DEFAULT, pdefault(lapl), es_id))
 
+#IF HDF5_VERSION >= (1, 13, 0):
 @cython.binding(False)
 @with_phil
 def create_async(ObjectID loc not None, char* name, TypeID tid not None,
-    SpaceID space not None, *, char* obj_name='.', PropID lapl=None, int es_id=0):
+    SpaceID space not None, *, char* obj_name='.', PropID lapl=None, hid_t es_id=0):
     """(ObjectID loc, STRING name, TypeID tid, SpaceID space, **kwds) => AttrID
 
     Create a new attribute, attached to an existing object.
 
     STRING obj_name (".")
-        Attach attribute to this group member instead
+	Attach attribute to this group member instead
 
     PropID lapl
-        Link access property list for obj_name
+	Link access property list for obj_name
     """
-
+    print("Using H5Acreate_by_name_async")
     return AttrID(H5Acreate_by_name_async(loc.id, obj_name, name, tid.id,
-            space.id, H5P_DEFAULT, H5P_DEFAULT, pdefault(lapl), 0))
+	    space.id, H5P_DEFAULT, H5P_DEFAULT, pdefault(lapl), 0))
 
 # --- open, open_by_name, open_by_idx ---
 @cython.binding(False)
 @with_phil
 def open(ObjectID loc not None, char* name=NULL, int index=-1, *,
     char* obj_name='.', int index_type=H5_INDEX_NAME, int order=H5_ITER_INC,
-    PropID lapl=None, int es_id=0):
+    PropID lapl=None):
     """(ObjectID loc, STRING name=, INT index=, **kwds) => AttrID
 
     Open an attribute attached to an existing object.  You must specify
@@ -93,15 +94,30 @@ x`
         raise TypeError("Exactly one of name or idx must be specified")
 
     if name != NULL:
+        return AttrID(H5Aopen_by_name(loc.id, obj_name, name,
+                        H5P_DEFAULT, pdefault(lapl)))
+    else:
+        return AttrID(H5Aopen_by_idx(loc.id, obj_name,
+            <H5_index_t>index_type, <H5_iter_order_t>order, index,
+            H5P_DEFAULT, pdefault(lapl)))
+
+#IF HDF5_VERSION >= (1, 13, 0):
+@cython.binding(False)
+@with_phil
+def open_async(ObjectID loc not None, char* name=NULL, int index=-1, *,
+	char* obj_name='.', int index_type=H5_INDEX_NAME, int order=H5_ITER_INC,
+	PropID lapl=None, hid_t es_id=0):
+
+    if (name == NULL and index < 0) or (name != NULL and index >= 0):
+        raise TypeError("Exactly one of name or idx must be specified")
+
+    if name != NULL:
         return AttrID(H5Aopen_by_name_async(loc.id, obj_name, name,
                         H5P_DEFAULT, pdefault(lapl), es_id))
     else:
         return AttrID(H5Aopen_by_idx_async(loc.id, obj_name,
             <H5_index_t>index_type, <H5_iter_order_t>order, index,
             H5P_DEFAULT, pdefault(lapl), es_id))
-
-
-
 # --- exists, exists_by_name ---
 
 @with_phil
@@ -124,7 +140,7 @@ def exists(ObjectID loc not None, char* name, *,
 
 @with_phil
 def rename(ObjectID loc not None, char* name, char* new_name, *,
-    char* obj_name='.', PropID lapl=None, int es_id=0):
+    char* obj_name='.', PropID lapl=None):
     """(ObjectID loc, STRING name, STRING new_name, **kwds)
 
     Rename an attribute.  Keywords:
@@ -135,6 +151,12 @@ def rename(ObjectID loc not None, char* name, char* new_name, *,
     PropID lapl (None)
         Link access property list for obj_name
     """
+    H5Arename_by_name(loc.id, obj_name, name, new_name, pdefault(lapl))
+    
+#IF HDF5_VERSION >= (1, 13, 0):
+@with_phil
+def rename_async(ObjectID loc not None, char* name, char* new_name, *, char* obj_name='.', PropID lapl=None, hid_t es_id=0):
+
     H5Arename_by_name_async(loc.id, obj_name, name, new_name, pdefault(lapl), es_id)
 
 

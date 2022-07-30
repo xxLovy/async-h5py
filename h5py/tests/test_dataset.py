@@ -16,11 +16,13 @@
     2. Type conversion for read and write (currently untested)
 """
 
+from multiprocessing import Event
 import pathlib
 import os
 import sys
 import numpy as np
 import platform
+from h5py._hl.eventset import Eventset
 import pytest
 import warnings
 
@@ -1875,3 +1877,83 @@ class TestVirtualPrefix(BaseDataset):
         self.assertEqual(virtual_prefix, virtual_prefix_readback)
         self.assertIsInstance(dset, Dataset)
         self.assertEqual(dset.shape, (10, 3))
+
+@ut.skipIf(version.hdf5_version_tuple < (1, 13, 0), 'Requires HDF5 1.13.0 or later')
+class TestAsync(BaseDataset):
+    from h5py import Eventset
+    def setUp(self):
+        self.es_id = Eventset()
+        self.es_id.wait(-1)
+        assert self.es_id.num_in_progress==0
+        assert self.es_id.op_failed==False
+        self.f = File(self.mktemp(), 'w', es_id=self.es_id)
+
+    def tearDown(self):
+        if self.f:
+            self.f.close()
+            self.es_id.wait(-1)
+            assert self.es_id.num_in_progress==0
+            assert self.es_id.op_failed==False
+        if self.es_id:
+            self.es_id.close()
+    
+
+    def test_create_dataset(self):
+        dset = self.f.create_dataset_async("dset", (20, 30), es_id=self.es_id)
+
+    def test_write_direct(self):
+        data_write = np.arange(100, dtype=int)
+        dset = self.f.create_dataset_async("dset", (10, 10), es_id=self.es_id)
+        dset.write_direct_async(data_write, es_id=self.es_id)
+        out = dset[...]
+        self.assertArrayEqual(out, data_write)
+
+    def test_read_direct(self):
+        data_read = np.empty(100, dtype=int)
+        data = np.arange(100, dtype=int)
+        dset = self.f.create_dataset_async("dset", (10, 10), data=data, es_id=self.es_id)
+        dset.read_direct_async(data_read)
+        self.assertArrayEqual(data, data_read)
+
+    def test_data_change(self):
+        es_id0 = Eventset()
+        es_id1 = Eventset()
+        data0_write = np.arange(20 * 30, dtype=int)
+        data1_write = np.arange(20 * 30, dtype=int)
+        data1_write *= 2
+
+        data0_read = np.empty(20 * 30, dtype=int)
+        data1_read = np.empty(20 * 30, dtype=int)
+        dset0 = self.f.create_dataset_async("dset0", (20, 30), dtype=int, es_id=es_id0)
+        dset1 = self.f.create_dataset_async("dset1", (20, 30), dtype=int, es_id=es_id1)
+        # W0, R0, W1, R1, W1', W0', R0', R1'
+        dset0.write_direct_async(data0_write, es_id=es_id0)
+        dset0.read_direct_async(data0_read, es_id=es_id0)
+        #Verify data
+        self.assertArrayEqual(data0_write, data0_read)
+        dset1.write_direct_async(data1_write, es_id=es_id1)
+        dset1.read_direct_async(data1_read, es_id=es_id1)
+        # Verify data
+        self.assertArrayEqual(data1_write, data1_read)
+        
+        # Change data 0 and 1
+        data0_write *= -1
+        data1_write *= -1
+        dset0.write_direct_async(data0_write, es_id=es_id0)
+        dset0.read_direct_async(data0_read, es_id=es_id0)
+        #Verify data
+        self.assertArrayEqual(data0_write, data0_read)
+        dset1.write_direct_async(data1_write, es_id=es_id1)
+        dset1.read_direct_async(data1_read, es_id=es_id1)
+        # Verify data
+        self.assertArrayEqual(data1_write, data1_read)
+        
+    def test_resize(self):
+        dset = self.f.create_dataset_async('foo', (20, 30), maxshape=(20, 60), es_id=self.es_id)
+        self.assertEqual(dset.shape, (20, 30))
+        dset.resize_async((20, 50), self.es_id)
+        self.assertEqual(dset.shape, (20, 50))
+        dset.resize_async((20, 60), self.es_id)
+        self.assertEqual(dset.shape, (20, 60))
+
+        

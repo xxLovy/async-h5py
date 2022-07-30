@@ -107,7 +107,7 @@ def open(char* name, unsigned int flags=H5F_ACC_RDWR, PropFAID fapl=None):
 
 IF HDF5_VERSION >= (1, 13, 0):
     @with_phil
-    def open_async(char* name, unsigned int flags=H5F_ACC_RDWR, PropFAID fapl=None, int es_id=0):
+    def open_async(char* name, unsigned int flags=H5F_ACC_RDWR, PropFAID fapl=None, hid_t es_id=0):
         """(STRING name, UINT flags=ACC_RDWR, PropFAID fapl=None) => FileID
 
         Open an existing HDF5 file.  Keyword "flags" may be:
@@ -145,20 +145,9 @@ def create(char* name, int flags=H5F_ACC_TRUNC, PropFCID fcpl=None,
 IF HDF5_VERSION >= (1, 13, 0):
     @with_phil
     def create_async(char* name, int flags=H5F_ACC_TRUNC, PropFCID fcpl=None,
-                                                PropFAID fapl=None, int es_id=0):
-        """(STRING name, INT flags=ACC_TRUNC, PropFCID fcpl=None,
-        PropFAID fapl=None) => FileID
-
-        Create a new HDF5 file.  Keyword "flags" may be:
-
-        ACC_TRUNC
-            Truncate an existing file, discarding its data
-
-        ACC_EXCL
-            Fail if a conflicting file exists
-
-        To keep the behavior in line with that of Python's built-in functions,
-        the default is ACC_TRUNC.  Be careful!
+                                                PropFAID fapl=None, hid_t es_id=0):
+        """
+        Async version of create
         """
         print('Using h5py with async HDF5 to create a file')
         return FileID(H5Fcreate_async(name, flags, pdefault(fcpl), pdefault(fapl), es_id))
@@ -203,7 +192,7 @@ def flush(ObjectID obj not None, int scope=H5F_SCOPE_LOCAL):
 
 IF HDF5_VERSION >= (1, 13, 0):
     @with_phil
-    def flush_async(ObjectID obj not None, int scope=H5F_SCOPE_LOCAL, int es_id=0):
+    def flush_async(ObjectID obj not None, int scope=H5F_SCOPE_LOCAL, hid_t es_id=0):
         """(ObjectID obj, INT scope=SCOPE_LOCAL)
 
         Tell the HDF5 library to flush file buffers to disk.  "obj" may
@@ -394,7 +383,6 @@ cdef class FileID(GroupID):
         physical file might not be closed until all remaining open
         identifiers are freed.
         """
-        print('Using h5py with async HDF5 to close a file')
         self._close()
         _objects.nonlocal_close()
 
@@ -429,7 +417,7 @@ cdef class FileID(GroupID):
         return FileID(H5Freopen(self.id))
     
     @with_phil
-    def reopen_async(self, int es_id=0):
+    def reopen_async(self, hid_t es_id=0):
         """() => FileID
 
         Retrieve another identifier for a file (which must still be open).

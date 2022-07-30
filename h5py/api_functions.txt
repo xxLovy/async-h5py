@@ -103,6 +103,7 @@ hdf5:
   herr_t    H5Dclose(hid_t dset_id)
 
   hid_t     H5Dget_space(hid_t dset_id)
+  hid_t     H5Dget_space_async(hid_t dset_id, hid_t es_id)
   herr_t    H5Dget_space_status(hid_t dset_id, H5D_space_status_t *status)
   hid_t     H5Dget_type(hid_t dset_id)
   hid_t     H5Dget_create_plist(hid_t dataset_id)
@@ -125,7 +126,7 @@ hdf5:
 
   herr_t    H5Diterate(void *buf, hid_t type_id, hid_t space_id,  H5D_operator_t op, void* operator_data) nogil
   herr_t    H5Dset_extent(hid_t dset_id, hsize_t* size) nogil
-
+  herr_t    H5Dset_extent_async(hid_t dset_id, hsize_t* size, hid_t es_id)
   # SWMR functions
   1.9.178   herr_t H5Dflush(hid_t dataset_id) nogil
   1.9.178   herr_t H5Drefresh(hid_t dataset_id) nogil

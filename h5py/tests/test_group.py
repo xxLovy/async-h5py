@@ -1108,3 +1108,40 @@ class TestMutableMapping(BaseGroup):
         Group.__delitem__
         Group.__iter__
         Group.__len__
+
+@ut.skipIf(h5py.version.hdf5_version_tuple < (1, 13, 0),
+           'Requires HDF5 1.13.0 or later')     
+class TestAsync(BaseGroup):
+
+    """
+        Feature: New groups can be created asynchronously via .create_group_async method
+    """
+    from h5py import Eventset
+    def setUp(self):
+        self.es_id = Eventset()
+        self.es_id.wait(-1)
+        assert self.es_id.num_in_progress==0
+        assert self.es_id.op_failed==False
+        self.f = File(self.mktemp(), 'w', es_id=self.es_id)
+
+    def tearDown(self):
+        if self.f:
+            self.f.close()
+            self.es_id.wait(-1)
+            assert self.es_id.num_in_progress==0
+            assert self.es_id.op_failed==False
+        if self.es_id:
+            self.es_id.close()
+
+    def test_create_async(self):
+        """ Simple .create_group_async call """
+        
+        grp = self.f.create_group_async('foo', es_id=es_id)
+        self.assertIsInstance(grp, Group)
+
+        grp2 = self.f.create_group_async(b'bar', es_id=es_id)
+        self.assertIsInstance(grp2, Group)
+
+
+
+

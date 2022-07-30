@@ -182,14 +182,26 @@ IF HDF5_VERSION >= (1, 8, 5):
 # === General object operations ===============================================
 
 @with_phil
-def open(ObjectID loc not None, char* name, PropID lapl=None, int es_id=0):
+def open(ObjectID loc not None, char* name, PropID lapl=None):
     """(ObjectID loc, STRING name, PropID lapl=None) => ObjectID
 
     Open a group, dataset, or named datatype attached to an existing group.
     """
+    return wrap_identifier(H5Oopen(loc.id, name, pdefault(lapl)))
+    
+    
+    
+#IF HDF5_VERSION >= (1, 13, 0):
+@with_phil
+def open_async(ObjectID loc not None, char* name, PropID lapl=None, hid_t es_id=0):
+    """(ObjectID loc, STRING name, PropID lapl=None) => ObjectID
+
+    Open a group, dataset, or named datatype attached to an existing group.
+    """
+    print("Using H5Oopen_async")
     return wrap_identifier(H5Oopen_async(loc.id, name, pdefault(lapl), es_id))
-
-
+	
+	
 @with_phil
 def link(ObjectID obj not None, GroupID loc not None, char* name,
     PropID lcpl=None, PropID lapl=None):
@@ -204,7 +216,7 @@ def link(ObjectID obj not None, GroupID loc not None, char* name,
 
 @with_phil
 def copy(ObjectID src_loc not None, char* src_name, GroupID dst_loc not None,
-    char* dst_name, PropID copypl=None, PropID lcpl=None, int es_id=0):
+    char* dst_name, PropID copypl=None, PropID lcpl=None):
     """(ObjectID src_loc, STRING src_name, GroupID dst_loc, STRING dst_name,
     PropID copypl=None, PropID lcpl=None)
 
@@ -214,10 +226,25 @@ def copy(ObjectID src_loc not None, char* src_name, GroupID dst_loc not None,
     The default behavior is a recursive copy of the object and all objects
     below it.  This behavior is modified via the "copypl" property list.
     """
+    H5Ocopy(src_loc.id, src_name, dst_loc.id, dst_name, pdefault(copypl),
+        pdefault(lcpl))
+
+#IF HDF5_VERSION >= (1, 13, 0):
+@with_phil
+def copy_async(ObjectID src_loc not None, char* src_name, GroupID dst_loc not None,
+char* dst_name, PropID copypl=None, PropID lcpl=None, hid_t es_id=0):
+    """(ObjectID src_loc, STRING src_name, GroupID dst_loc, STRING dst_name,
+    PropID copypl=None, PropID lcpl=None)
+
+    Copy a group, dataset or named datatype from one location to another.  The
+    source and destination need not be in the same file.
+
+    The default behavior is a recursive copy of the object and all objects
+    below it.  This behavior is modified via the "copypl" property list.
+    """
+    print("Using H5Ocopy_async")
     H5Ocopy_async(src_loc.id, src_name, dst_loc.id, dst_name, pdefault(copypl),
-        pdefault(lcpl), es_id)
-
-
+    pdefault(lcpl), es_id)
 @with_phil
 def set_comment(ObjectID loc not None, char* comment, *, char* obj_name=".",
     PropID lapl=None):

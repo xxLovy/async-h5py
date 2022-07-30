@@ -148,7 +148,7 @@ def open(ObjectID loc not None, char* name):
 
 IF HDF5_VERSION >= (1, 13, 0):
     @with_phil
-    def open_async(ObjectID loc not None, char* name, int es_id=0):
+    def open_async(ObjectID loc not None, char* name, hid_t es_id=0):
         """(ObjectID loc, STRING name) => GroupID
 
         Open an existing HDF5 group, attached to some other group.
@@ -181,7 +181,7 @@ def create(ObjectID loc not None, object name, PropID lcpl=None,
 IF HDF5_VERSION >= (1, 13, 0):
     @with_phil
     def create_async(ObjectID loc not None, object name, PropID lcpl=None,
-            PropID gcpl=None, int es_id=0):
+            PropID gcpl=None, hid_t es_id=0):
         """(ObjectID loc, STRING name or None, PropLCID lcpl=None,
             PropGCID gcpl=None)
         => GroupID

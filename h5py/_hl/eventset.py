@@ -12,13 +12,30 @@ from .. import version
 
 
 
-class Es():
+class Eventset():
 	
 	def __init__(self):
-		self.id=h5es.create()
+		self.es_id=h5es.create()
+		self.num_in_progress = 0
+		self.op_failed = False
 	
 	def wait(self, timeout):
-		return h5es.wait(self.id, timeout=timeout)
-		
+		forever = 18446744073709551615
+		if timeout < 0:
+			timeout = forever
+			h5es.wait(self, timeout=timeout)
+			return
+		if timeout <= forever:
+			h5es.wait(self, timeout=timeout)
+			return
+		try:
+			if timeout > forever:
+				raise ValueError("ValueError: Too large value for timeout, the maximum number is 18446744073709551615")
+		except ValueError as v:
+			print(v)
+        
+
 	def close(self):
-		return h5es.close(self.id)
+		return h5es.close(self.es_id)
+
+ 

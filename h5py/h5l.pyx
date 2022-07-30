@@ -123,28 +123,55 @@ cdef class LinkProxy:
 
     @with_phil
     def create_hard(self, char* new_name, GroupID cur_loc not None,
-        char* cur_name, PropID lcpl=None, PropID lapl=None, int es_id=0):
+        char* cur_name, PropID lcpl=None, PropID lapl=None):
         """ (STRING new_name, GroupID cur_loc, STRING cur_name,
         PropID lcpl=None, PropID lapl=None)
 
         Create a new hard link in this group pointing to an existing link
         in another group.
         """
+        H5Lcreate_hard(cur_loc.id, cur_name, self.id, new_name,
+            pdefault(lcpl), pdefault(lapl))
+
+
+    #IF HDF5_VERSION >= (1, 13, 0):
+    @with_phil
+    def create_hard_async(self, char* new_name, GroupID cur_loc not None,
+    char* cur_name, PropID lcpl=None, PropID lapl=None, hid_t es_id=0):
+        """ (STRING new_name, GroupID cur_loc, STRING cur_name,
+        PropID lcpl=None, PropID lapl=None)
+
+        Create a new hard link in this group pointing to an existing link
+        in another group.
+        """
+        print("Using H5Lcreate_hard_async")
         H5Lcreate_hard_async(cur_loc.id, cur_name, self.id, new_name,
-            pdefault(lcpl), pdefault(lapl), 0)
-
-
+        pdefault(lcpl), pdefault(lapl), 0)
+    
     @with_phil
     def create_soft(self, char* new_name, char* target,
-        PropID lcpl=None, PropID lapl=None, int es_id=0):
+        PropID lcpl=None, PropID lapl=None):
         """(STRING new_name, STRING target, PropID lcpl=None, PropID lapl=None)
 
         Create a new soft link in this group, with the given string value.
         The link target does not need to exist.
         """
-        H5Lcreate_soft_async(target, self.id, new_name,
-            pdefault(lcpl), pdefault(lapl), es_id)
+        H5Lcreate_soft(target, self.id, new_name,
+            pdefault(lcpl), pdefault(lapl))
 
+
+    #IF HDF5_VERSION >= (1, 13, 0):
+    @with_phil
+    def create_soft_async(self, char* new_name, char* target,
+    PropID lcpl=None, PropID lapl=None, hid_t es_id=0):
+        """(STRING new_name, STRING target, PropID lcpl=None, PropID lapl=None)
+
+        Create a new soft link in this group, with the given string value.
+        The link target does not need to exist.
+        """
+        print("Using H5Lcreate_soft_async")
+        H5Lcreate_soft_async(target, self.id, new_name,
+        pdefault(lcpl), pdefault(lapl), es_id)
 
     @with_phil
     def create_external(self, char* link_name, char* file_name, char* obj_name,
@@ -204,7 +231,7 @@ cdef class LinkProxy:
 
 
     @with_phil
-    def exists(self, char* name, PropID lapl=None, int es_id=0):
+    def exists(self, char* name, PropID lapl=None, hid_t es_id=0):
         """ (STRING name, PropID lapl=None) => BOOL
 
             Check if a link of the specified name exists in this group.

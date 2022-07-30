@@ -159,7 +159,7 @@ cdef herr_t dset_rw(hid_t dset, hid_t mtype, hid_t mspace, hid_t fspace,
     return 0
 
 cdef herr_t dset_rw_async(hid_t dset, hid_t mtype, hid_t mspace, hid_t fspace,
-                    hid_t dxpl, void* progbuf, int read, int es_id) except -1:
+                    hid_t dxpl, void* progbuf, int read, hid_t es_id) except -1:
 
     cdef htri_t need_bkg
     cdef hid_t dstype = -1      # Dataset datatype

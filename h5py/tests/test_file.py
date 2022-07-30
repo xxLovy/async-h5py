@@ -1041,3 +1041,68 @@ def test_close_gc(writable_file):
             refs = [d.id for d in f.values()]
             refs.append(refs)   # Make a reference cycle so GC is involved
             del refs  # GC is likely to fire while closing the file
+
+
+@ut.skipIf(h5py.version.hdf5_version_tuple < (1, 13, 0),
+           'Requires HDF5 1.13.0 or later')
+class TestAsync(TestCase):
+
+    """
+        Feature: Create file with async h5py.
+    """
+    from h5py import Eventset
+    def test_create_async(self):
+        """ Mode 'w' opens file in overwrite mode to test H5Fcreate_async"""
+        es_id = Eventset(-1)
+        fname = self.mktemp()
+        
+        es_id.wait(-1)
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
+        
+        fid = File(fname, 'w', es_id=es_id)
+        self.assertTrue(fid)
+        fid.create_group_async('foo', es_id=es_id)
+        fid.close()
+        es_id.wait(-1)
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
+        
+        fid = File(fname, 'w', es_id=es_id)
+        self.assertNotIn('foo', fid)
+        fid.close()
+        es_id.wait(-1)
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
+        '''es_id.wait(timeout, num_in_ , op)
+        check num_in_ and op and before file open/create'''
+
+    def test_open_async(self):
+        """ Mode 'r' opens file in readonly mode to test H5Fopen_async"""
+        es_id = Eventset()
+        fname = self.mktemp()
+        fid = File(fname, 'w', es_id=es_id)
+        
+        fid.close()
+        es_id.wait(-1)
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
+        self.assertFalse(fid)
+        fid = File(fname, 'r', es_id=es_id)
+        self.assertTrue(fid)
+        with self.assertRaises(ValueError):
+            fid.create_group_async('foo', es_id=es_id)
+        
+        fid.close()
+        es_id.wait(-1)
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
+        
+    
+    def test_flush_async(self):
+        """ Flush via .flush_async method """
+        es_id = Eventset()
+        
+        fid = File(self.mktemp(), 'w', es_id=es_id)
+        fid.flush_async(es_id=es_id.es_id)
+        fid.close()

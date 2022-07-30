@@ -330,14 +330,6 @@ def make_fid_async(name, mode, userblock_size, fapl, fcpl=None, swmr=False, es_i
 
     return fid
 
-#def create_async(name):
-#	return h5f.create_async(bytes(name, encoding = 'utf8'))
-
-def open_async(name):
-	return h5f.open_async(bytes(name, encoding = 'utf8'))
-
-def reopen_async(name):
-	return h5f.reopen_async(bytes(name, encoding = 'utf8'))
 
 	
 class File(Group):
@@ -446,7 +438,7 @@ class File(Group):
                  rdcc_nslots=None, rdcc_nbytes=None, rdcc_w0=None, track_order=None,
                  fs_strategy=None, fs_persist=False, fs_threshold=1, fs_page_size=None,
                  page_buf_size=None, min_meta_keep=0, min_raw_keep=0, locking=None,
-                 alignment_threshold=1, alignment_interval=1, meta_block_size=None, async_=0, es_id=0, **kwds):
+                 alignment_threshold=1, alignment_interval=1, meta_block_size=None, es_id=None, **kwds):
         """Create a new file object.
 
         See the h5py user guide for a detailed explanation of the options.
@@ -617,10 +609,10 @@ class File(Group):
                 fcpl = make_fcpl(track_order=track_order, fs_strategy=fs_strategy,
                                  fs_persist=fs_persist, fs_threshold=fs_threshold,
                                  fs_page_size=fs_page_size)
-                if async_ == 0:
-                	fid = make_fid(name, mode, userblock_size, fapl, fcpl, swmr=swmr)
-               	else:
-               		fid = make_fid_async(name, mode, userblock_size, fapl, fcpl, swmr=swmr, es_id=es_id)
+                if es_id is None:
+                    fid = make_fid(name, mode, userblock_size, fapl, fcpl, swmr=swmr)
+                else:
+                    fid = make_fid_async(name, mode, userblock_size, fapl, fcpl, swmr=swmr, es_id=es_id.es_id)
 
             if isinstance(libver, tuple):
                 self._libver = libver
@@ -650,11 +642,14 @@ class File(Group):
         with phil:
             h5f.flush(self.id)
     
-    def flush_async(self, es_id=0):
+    def flush_async(self, es_id=None):
         """ Tell the HDF5 library to flush its buffers.
         """
-        with phil:
-            h5f.flush_async(self.id, es_id)
+        if es_id is None:
+            h5f.flash_async(self.id, 0)
+        else:
+            with phil:
+                h5f.flush_async(self.id, es_id=es_id.es_id)
 
     @with_phil
     def __enter__(self):

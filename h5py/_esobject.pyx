@@ -157,154 +157,17 @@ def nonlocal_close():
 # --- End registry code -------------------------------------------------------
 
 
-cdef class ObjectID:
+cdef class EsObjectID:
+    
+   	def __init__(self):
+		self.id=h5es.create()
+	
+	def wait(self, timeout):
+		return h5es.wait(self.id, timeout=timeout)
+		
+	def close(self):
+		return h5es.close(self.id)
 
-    """
-        Represents an HDF5 identifier.
-
-    attributes:
-    cdef object __weakref__
-    cdef readonly hid_t id
-    cdef public int locked              # Cannot be closed, explicitly or auto
-    cdef object _hash
-    cdef size_t _pyid
-    """
-
-    property fileno:
-        def __get__(self):
-            cdef H5G_stat_t stat
-            with _phil:
-                H5Gget_objinfo(self.id, '.', 0, &stat)
-                return (stat.fileno[0], stat.fileno[1])
-
-
-    property valid:
-        def __get__(self):
-            return is_h5py_obj_valid(self)
-
-
-    def __cinit__(self, id_):
-        with _phil:
-            self.id = id_
-            self.locked = 0
-            self._pyid = id(self)
-            IF DEBUG_ID:
-                print("CINIT - registering %d of kind %s HDF5 id %d" % (self._pyid, type(self), self.id))
-            registry[self._pyid] = weakref.ref(self)
-
-
-    def __dealloc__(self):
-        with _phil:
-            IF DEBUG_ID:
-                print("DEALLOC - unregistering %d HDF5 id %d" % (self._pyid, self.id))
-            if is_h5py_obj_valid(self) and (not self.locked):
-                if H5Idec_ref(self.id) < 0:
-                    warnings.warn(
-                        "Reference counting issue with HDF5 id {}".format(
-                            self.id
-                        )
-                    )
-            if self._pyid is not None:
-                del registry[self._pyid]
-
-
-    def _close(self):
-        """ Manually close this object. """
-
-        with _phil:
-            IF DEBUG_ID:
-                print("CLOSE - %d HDF5 id %d" % (self._pyid, self.id))
-            if is_h5py_obj_valid(self) and (not self.locked):
-                if H5Idec_ref(self.id) < 0:
-                    warnings.warn(
-                        "Reference counting issue with HDF5 id {}".format(
-                            self.id
-                        )
-                    )
-            self.id = 0
-
-    def close(self):
-        """ Close this identifier. """
-        # Note this is the default close method.  Subclasses, e.g. FileID,
-        # which have nonlocal effects should override this.
-        self._close()
-
-    def __nonzero__(self):
-        return self.valid
-
-    def __copy__(self):
-        cdef ObjectID cpy
-        with _phil:
-            cpy = type(self)(self.id)
-            H5Iinc_ref(cpy.id)
-            return cpy
-
-
-    def __richcmp__(self, object other, int how):
-        """ Default comparison mechanism for HDF5 objects (equal/not-equal)
-
-        Default equality testing:
-        1. Objects which are not both ObjectIDs are unequal
-        2. Objects with the same HDF5 ID number are always equal
-        3. Objects which hash the same are equal
-        """
-        cdef bint equal = 0
-
-        with _phil:
-            if how != 2 and how != 3:
-                return NotImplemented
-
-            if isinstance(other, ObjectID):
-                if self.id == other.id:
-                    equal = 1
-                else:
-                    try:
-                        equal = hash(self) == hash(other)
-                    except TypeError:
-                        pass
-
-            if how == 2:
-                return equal
-            return not equal
-
-
-    def __hash__(self):
-        """ Default hashing mechanism for HDF5 objects
-
-        Default hashing strategy:
-        1. Try to hash based on the object's fileno and objno records
-        2. If (1) succeeds, cache the resulting value
-        3. If (1) fails, raise TypeError
-        """
-        cdef H5G_stat_t stat
-
-        with _phil:
-            if self._hash is None:
-                try:
-                    H5Gget_objinfo(self.id, '.', 0, &stat)
-                    self._hash = hash((stat.fileno[0], stat.fileno[1], stat.objno[0], stat.objno[1]))
-                except Exception:
-                    raise TypeError("Objects of class %s cannot be hashed" % self.__class__.__name__)
-
-            return self._hash
-
-
-cdef hid_t pdefault(ObjectID pid):
-
-    if pid is None:
-        return <hid_t>H5P_DEFAULT
-    return pid.id
-
-
-cdef int is_h5py_obj_valid(ObjectID obj):
-    """
-    Check that h5py object is valid, i.e. HDF5 object wrapper is valid and HDF5
-    object is valid
-    """
-    # MUST BE CALLABLE AT ANY TIME, CANNOT USE PROPERTIES ETC. AS PER
-    # http://cython.readthedocs.io/en/latest/src/userguide/special_methods.html
-
-    # Locked objects are always valid, regardless of obj.id
     if obj.locked:
         return True
 
@@ -316,4 +179,3 @@ cdef int is_h5py_obj_valid(ObjectID obj):
     # identifiers, hence the above checks.
     with _phil:
         return H5Iis_valid(obj.id)
-

@@ -19,3 +19,5 @@ class TestVisit(TestCase):
         with pytest.raises(SampleException, match='throwing exception'):
             fid.visititems(throwing)
         fid.close()
+        
+        
