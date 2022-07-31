@@ -1927,24 +1927,24 @@ class TestAsync(BaseDataset):
         dset0 = self.f.create_dataset_async("dset0", (20, 30), dtype=int, es_id=es_id0)
         dset1 = self.f.create_dataset_async("dset1", (20, 30), dtype=int, es_id=es_id1)
         # W0, R0, W1, R1, W1', W0', R0', R1'
-        dset0.write_direct_async(data0_write, es_id=es_id0)
-        dset0.read_direct_async(data0_read, es_id=es_id0)
+        dset0.write_direct_async(data0_write.reshape(20, 30), es_id=es_id0)
+        dset0.read_direct_async(data0_read.reshape(20, 30), es_id=es_id0)
         #Verify data
         self.assertArrayEqual(data0_write, data0_read)
-        dset1.write_direct_async(data1_write, es_id=es_id1)
-        dset1.read_direct_async(data1_read, es_id=es_id1)
+        dset1.write_direct_async(data1_write.reshape(20, 30), es_id=es_id1)
+        dset1.read_direct_async(data1_read.reshape(20, 30), es_id=es_id1)
         # Verify data
         self.assertArrayEqual(data1_write, data1_read)
         
         # Change data 0 and 1
         data0_write *= -1
         data1_write *= -1
-        dset0.write_direct_async(data0_write, es_id=es_id0)
-        dset0.read_direct_async(data0_read, es_id=es_id0)
+        dset0.write_direct_async(data0_write.reshape(20, 30), es_id=es_id0)
+        dset0.read_direct_async(data0_read.reshape(20, 30), es_id=es_id0)
         #Verify data
         self.assertArrayEqual(data0_write, data0_read)
-        dset1.write_direct_async(data1_write, es_id=es_id1)
-        dset1.read_direct_async(data1_read, es_id=es_id1)
+        dset1.write_direct_async(data1_write.reshape(20, 30), es_id=es_id1)
+        dset1.read_direct_async(data1_read.reshape(20, 30), es_id=es_id1)
         # Verify data
         self.assertArrayEqual(data1_write, data1_read)
         
