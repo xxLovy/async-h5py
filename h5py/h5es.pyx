@@ -31,7 +31,7 @@ def wait(es_id, uint64_t timeout):
         es_id.op_failed = True	
 	
 def close(es_id):
-    return H5ESclose(es_id.es_id)
+    H5ESclose(es_id.es_id)
     
 
 cdef class EsObjectID():

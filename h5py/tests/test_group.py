@@ -31,7 +31,6 @@ from h5py import File, Group, SoftLink, HardLink, ExternalLink
 from h5py import Dataset, Datatype
 from h5py import h5t
 from h5py._hl.compat import filename_encode
-
 # If we can't encode unicode filenames, there's not much point failing tests
 # which must fail
 try:
@@ -1109,39 +1108,34 @@ class TestMutableMapping(BaseGroup):
         Group.__iter__
         Group.__len__
 
-@ut.skipIf(h5py.version.hdf5_version_tuple < (1, 13, 0),
-           'Requires HDF5 1.13.0 or later')     
+@ut.skipIf(h5py.version.hdf5_version_tuple < (1, 13, 0), 'Requires HDF5 1.13.0 or later')     
 class TestAsync(BaseGroup):
-
-    """
-        Feature: New groups can be created asynchronously via .create_group_async method
-    """
-    from h5py import Eventset
     def setUp(self):
-        self.es_id = Eventset()
-        self.es_id.wait(-1)
-        assert self.es_id.num_in_progress==0
-        assert self.es_id.op_failed==False
-        self.f = File(self.mktemp(), 'w', es_id=self.es_id)
+        pass
 
     def tearDown(self):
-        if self.f:
-            self.f.close()
-            self.es_id.wait(-1)
-            assert self.es_id.num_in_progress==0
-            assert self.es_id.op_failed==False
-        if self.es_id:
-            self.es_id.close()
-
+        pass
+    import sys
     def test_create_async(self):
+        from h5py import Eventset
         """ Simple .create_group_async call """
-        
+        wait_forever = sys.maxsize
+        es_id = Eventset()
+        es_id.wait(wait_forever)
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
+        self.f = File(self.mktemp(), 'w', es_id=es_id)
         grp = self.f.create_group_async('foo', es_id=es_id)
         self.assertIsInstance(grp, Group)
 
         grp2 = self.f.create_group_async(b'bar', es_id=es_id)
         self.assertIsInstance(grp2, Group)
-
-
+        if self.f:
+            self.f.close()
+            es_id.wait(wait_forever)
+            assert es_id.num_in_progress==0
+            assert es_id.op_failed==False
+        if es_id:
+            es_id.close()
 
 

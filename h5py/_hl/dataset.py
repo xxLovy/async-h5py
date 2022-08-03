@@ -175,12 +175,12 @@ def open_dset(parent, name, dapl=None, efile_prefix=None, virtual_prefix=None, *
 
     if virtual_prefix is not None:
         dapl.set_virtual_prefix(virtual_prefix)
-
+    
     dset_id = h5d.open(parent.id, name, dapl=dapl)
 
     return dset_id
 
-def open_dset(parent, name, dapl=None, efile_prefix=None, virtual_prefix=None, es_id=None, **kwds):
+def open_dset_async(parent, name, dapl=None, efile_prefix=None, virtual_prefix=None, es_id=None, **kwds):
     """ Return an existing low-level dataset identifier """
 
     if efile_prefix is not None or virtual_prefix is not None:
@@ -193,8 +193,11 @@ def open_dset(parent, name, dapl=None, efile_prefix=None, virtual_prefix=None, e
 
     if virtual_prefix is not None:
         dapl.set_virtual_prefix(virtual_prefix)
-
-    dset_id = h5d.open_async(parent.id, name, dapl=dapl, es_id=es_id.es_id)
+    
+    if es_id is None:
+        dset_id = h5d.open_async(parent.id, name, dapl=dapl, es_id=es_id.es_id)
+    else:
+        dset_id = h5d.open_async(parent.id, name, dapl=dapl, es_id=0)
 
     return dset_id
 
@@ -1071,7 +1074,10 @@ class Dataset(HLObject):
                 dest_sel = sel.select(dest.shape, dest_sel)
 
             for mspace in dest_sel.broadcast(source_sel.array_shape):
-                self.id.read_async(mspace, fspace, dest, dxpl=self._dxpl, es_id=es_id.es_id)
+                if es_id is None:
+                    self.id.read_async(mspace, fspace, dest, dxpl=self._dxpl, es_id=0)
+                else:
+                    self.id.read_async(mspace, fspace, dest, dxpl=self._dxpl, es_id=es_id.es_id)
 
     def write_direct(self, source, source_sel=None, dest_sel=None):
         """ Write data directly to HDF5 from a NumPy array.

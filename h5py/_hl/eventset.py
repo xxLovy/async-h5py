@@ -20,22 +20,21 @@ class Eventset():
 		self.op_failed = False
 	
 	def wait(self, timeout):
-		forever = 18446744073709551615
-		if timeout < 0:
-			timeout = forever
-			h5es.wait(self, timeout=timeout)
-			return
+		forever = 2*sys.maxsize +1
 		if timeout <= forever:
 			h5es.wait(self, timeout=timeout)
 			return
 		try:
 			if timeout > forever:
 				raise ValueError("ValueError: Too large value for timeout, the maximum number is 18446744073709551615")
+				
+			if timeout < 0:
+				raise ValueError("ValueError: Negative number are not allowed")
 		except ValueError as v:
 			print(v)
         
 
 	def close(self):
-		return h5es.close(self.es_id)
+		return h5es.close(self)
 
  

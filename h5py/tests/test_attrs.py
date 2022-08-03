@@ -299,3 +299,112 @@ def test_python_int_uint64(writable_file):
     # Check modifying an existing attribute
     f.attrs.modify('a', data)
     np.testing.assert_array_equal(f.attrs['a'], np.array(data, dtype=np.uint64))
+    
+'''    
+@ut.skipUnless(h5py.version.hdf5_version_tuple >= (1, 13, 0), 'HDF5 1.13.0 required')
+class TestAsync(BaseAttrs):
+    def setUp(self):
+        pass
+    def tearDown(self):
+        pass
+        
+    def test_create(self):
+        """ Attribute creation by direct assignment """
+        from h5py import Eventset
+        es_id = Eventset()
+        es_id.wait(-1)
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
+        self.f = File(self.mktemp(), 'w', es_id=es_id)
+        self.f.attrs['a'] = 4.0
+        self.assertEqual(list(self.f.attrs.keys()), ['a'])
+        self.assertEqual(self.f.attrs['a'], 4.0)
+        if self.f:
+            self.f.close()
+            es_id.wait(-1)
+            assert es_id.num_in_progress==0
+            assert es_id.op_failed==False
+        if es_id:
+            es_id.close()
+
+    def test_modify(self):
+        """ Attributes are modified by direct assignment"""
+        from h5py import Eventset
+        es_id = Eventset()
+        es_id.wait(-1)
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
+        self.f = File(self.mktemp(), 'w', es_id=es_id)
+        self.f.attrs['a'] = 3
+        self.assertEqual(list(self.f.attrs.keys()), ['a'])
+        
+        self.assertEqual(self.f.attrs['a'], 3)
+        self.f.attrs['a'] = 4
+        self.assertEqual(list(self.f.attrs.keys()), ['a'])
+        self.assertEqual(self.f.attrs['a'], 4)   
+        if self.f:
+            self.f.close()
+            es_id.wait(-1)
+            assert es_id.num_in_progress==0
+            assert es_id.op_failed==False
+        if es_id:
+            es_id.close()
+            
+            
+    def test_read(self):
+        from h5py import Eventset
+        es_id = Eventset()
+        es_id.wait(-1)
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
+        self.f = File(self.mktemp(), 'w', es_id=es_id)
+        
+        self.assertEqual(
+            self.empty_obj, self.f.attrs['x']
+        )
+        
+        if self.f:
+            self.f.close()
+            es_id.wait(-1)
+            assert es_id.num_in_progress==0
+            assert es_id.op_failed==False
+        if es_id:
+            es_id.close()
+    def test_write(self):
+        from h5py import Eventset
+        es_id = Eventset()
+        es_id.wait(-1)
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
+        self.f = File(self.mktemp(), 'w', es_id=es_id)
+        
+        self.f.attrs["y"] = self.empty_obj
+        self.assertTrue(is_empty_dataspace(h5a.open(self.f.id, b'y')))
+        
+        if self.f:
+            self.f.close()
+            es_id.wait(-1)
+            assert es_id.num_in_progress==0
+            assert es_id.op_failed==False
+        if es_id:
+            es_id.close()
+
+    def test_modify(self):
+        from h5py import Eventset
+        es_id = Eventset()
+        es_id.wait(-1)
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
+        self.f = File(self.mktemp(), 'w', es_id=es_id)
+        
+        with self.assertRaises(IOError):
+            self.f.attrs.modify('x', 1, es_id=es_id)
+            
+        if self.f:
+            self.f.close()
+            es_id.wait(-1)
+            assert es_id.num_in_progress==0
+            assert es_id.op_failed==False
+        if es_id:
+            es_id.close()
+'''
