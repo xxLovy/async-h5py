@@ -260,3 +260,79 @@ class TestWriteException(BaseAttrs):
 
         with self.assertRaises(KeyError):
             self.f.attrs['x']
+            
+            
+'''            
+@ut.skipUnless(h5py.version.hdf5_version_tuple >= (1, 13, 0), 'HDF5 1.13.0 required')
+class TestAsync(BaseAttrs):
+    def setUp(self):
+        pass
+    def tearDown(self):
+        pass
+               
+    def test_read(self):
+        from h5py import Eventset
+        es_id = Eventset()
+        import sys
+        wait_forever = sys.maxsize
+        es_id.wait(wait_forever)
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
+        self.f = File(self.mktemp(), 'w', es_id=es_id)
+        
+        self.assertEqual(
+            self.empty_obj, self.f.attrs['x']
+        )
+        
+        if self.f:
+            self.f.close()
+            es_id.wait(wait_forever)
+            self.assertEqual(es_id.num_in_progress, 0)
+            self.assertEqual(es_id.op_failed, False)
+        if es_id:
+            es_id.close()
+    def test_write(self):
+        from h5py import Eventset
+        es_id = Eventset()
+        import sys
+        wait_forever = sys.maxsize
+        self.f = File(self.mktemp(), 'w', es_id=es_id)
+        
+        self.f.attrs["y"] = self.empty_obj
+        self.assertTrue(is_empty_dataspace(h5a.open(self.f.id, b'y')))
+        
+        if self.f:
+            self.f.close()
+            es_id.wait(wait_forever)
+            self.assertEqual(es_id.num_in_progress, 0)
+            self.assertEqual(es_id.op_failed, False)
+        if es_id:
+            es_id.close()
+    def test_modify(self):
+        from h5py import Eventset
+        es_id = Eventset()
+        import sys
+        wait_forever = sys.maxsize
+        self.f = File(self.mktemp(), 'w', es_id=es_id)
+        
+        with self.assertRaises(IOError):
+            self.f.attrs.modify('x', 1)
+            
+        if self.f:
+            self.f.close()
+            es_id.wait(wait_forever)
+            self.assertEqual(es_id.num_in_progress, 0)
+            self.assertEqual(es_id.op_failed, False)
+        if es_id:
+            es_id.close()
+'''            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            

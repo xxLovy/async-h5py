@@ -348,6 +348,15 @@ class File(Group):
             return attrs.AttributeManager(self['/'])
 
     @property
+    def attrs_async(self):
+        """ Attributes attached to this object """
+        # hdf5 complains that a file identifier is an invalid location for an
+        # attribute. Instead of self, pass the root group to AttributeManager:
+        from . import attrs
+        with phil:
+            return attrs.AttributeManager(self['/'], es_id=self.es_id)
+
+    @property
     @with_phil
     def filename(self):
         """File name on disk"""
@@ -635,7 +644,11 @@ class File(Group):
 
                 self.id.close()
                 _objects.nonlocal_close()
-
+                
+    def close_async(self):
+        h5f.close_async(self.id, es_id=None)
+        self.close()
+        
     def flush(self):
         """ Tell the HDF5 library to flush its buffers.
         """

@@ -633,6 +633,12 @@ class Dataset(HLObject):
     def _is_empty(self):
         """Check if extent type is empty"""
         return self._extent_type == h5s.NULL
+        
+    #@property
+    #def es_id(self):
+        #"""Eventset for async h5py"""
+        #from h5py import Eventset
+        #return self.es_id
 
     @with_phil
     def __init__(self, bind, *, readonly=False):
@@ -649,6 +655,7 @@ class Dataset(HLObject):
         self._cache_props = {}
         self._local = local()
         self._local.astype = None
+        self.es_id= None
 
     def resize(self, size, axis=None):
         """ Resize the dataset, or the specified axis.

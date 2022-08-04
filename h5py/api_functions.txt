@@ -156,6 +156,7 @@ hdf5:
   hid_t     H5Fopen(char *name, unsigned flags, hid_t access_id)
   hid_t H5Fopen_async(const char *filename, unsigned flags, hid_t fapl_id, hid_t es_id)
   herr_t    H5Fclose (hid_t file_id)
+  herr_t    H5Fclose_async (hid_t file_id, hid_t es_id)
   htri_t    H5Fis_hdf5(char *name)
   herr_t    H5Fflush(hid_t object_id, H5F_scope_t scope) nogil
   herr_t    H5Fflush_async(hid_t object_id, H5F_scope_t scope, hid_t es_id)

@@ -2019,16 +2019,26 @@ class TestAsync(BaseDataset):
         from h5py import Eventset
         wait_forever = sys.maxsize
         es_id = Eventset()
-        es_id.wait(wait_forever)
-        assert es_id.num_in_progress==0
-        assert es_id.op_failed==False
         self.f = File(self.mktemp(), 'w', es_id=es_id)
         dset = self.f.create_dataset_async('foo', (20, 30), maxshape=(20, 60), es_id=es_id)
+        
+        es_id.wait(wait_forever)    
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
         self.assertEqual(dset.shape, (20, 30))
+        
         dset.resize_async((20, 50), es_id=es_id)
+        es_id.wait(wait_forever)    
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
         self.assertEqual(dset.shape, (20, 50))
+        
         dset.resize_async((20, 60), es_id=es_id)
+        es_id.wait(wait_forever)    
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
         self.assertEqual(dset.shape, (20, 60))
+        
         if self.f:
             self.f.close()
             es_id.wait(wait_forever)

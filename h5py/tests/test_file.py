@@ -184,7 +184,7 @@ class TestSpaceStrategy(TestCase):
         dset[...] = 1
         fid.close()
 
-
+'''
 @ut.skipIf(h5py.version.hdf5_version_tuple < (1, 10, 1),
            'Requires HDF5 1.10.1 or later')
 @pytest.mark.mpi_skip
@@ -236,7 +236,7 @@ class TestPageBuffering(TestCase):
         with File(fname, mode='r', page_buf_size=pbs-1) as f:
             fapl = f.id.get_access_plist()
             self.assertEqual(fapl.get_page_buffer_size()[0], fsp)
-
+'''
 
 class TestModes(TestCase):
 
@@ -1059,10 +1059,6 @@ class TestAsync(TestCase):
         es_id = Eventset()
         fname = self.mktemp()
         
-        es_id.wait(wait_forever)
-        assert es_id.num_in_progress==0
-        assert es_id.op_failed==False
-        
         fid = File(fname, 'w', es_id=es_id)
         self.assertTrue(fid)
         fid.create_group_async('foo', es_id=es_id)
@@ -1104,11 +1100,13 @@ class TestAsync(TestCase):
         
     
     def test_flush_async(self):
-        wait_forever = sys.maxsize
         from h5py import Eventset
         """ Flush via .flush_async method """
         es_id = Eventset()
-        
+        wait_forever = sys.maxsize
         fid = File(self.mktemp(), 'w', es_id=es_id)
         fid.flush_async(es_id=es_id)
+        es_id.wait(wait_forever)    
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
         fid.close()

@@ -418,11 +418,8 @@ cdef class FileID(GroupID):
     
     @with_phil
     def reopen_async(self, hid_t es_id=0):
-        """() => FileID
-
-        Retrieve another identifier for a file (which must still be open).
-        The new identifier is guaranteed to neither be mounted nor contain
-        a mounted file.
+        """
+        async verison of reopen
         """
         print("Using h5py with async HDF5 to reopen a file")
         return FileID(H5Freopen_async(self.id, es_id))

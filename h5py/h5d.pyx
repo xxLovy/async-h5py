@@ -373,6 +373,38 @@ cdef class DatasetID(ObjectID):
             if space_id:
                 H5Sclose(space_id)
 
+    @with_phil
+    def extend_async(self, tuple shape, es_id=None):
+        """ (TUPLE shape)
+
+            Extend the given dataset so it's at least as big as "shape".  Note
+            that a dataset may only be extended up to the maximum dimensions of
+            its dataspace, which are fixed when the dataset is created.
+        """
+        cdef int rank
+        cdef hid_t space_id = 0
+        cdef hsize_t* dims = NULL
+        
+        if es_id is None:
+            esid=0
+        else:
+            esid=es_id.es_id
+        try:
+            space_id = H5Dget_space_async(self.id, esid)
+            rank = H5Sget_simple_extent_ndims(space_id)
+
+            if len(shape) != rank:
+                raise TypeError("New shape length (%d) must match dataset rank (%d)" % (len(shape), rank))
+
+            dims = <hsize_t*>emalloc(sizeof(hsize_t)*rank)
+            convert_tuple(shape, dims, rank)
+            H5Dextend(self.id, dims)
+
+        finally:
+            efree(dims)
+            if space_id:
+                H5Sclose(space_id)
+
 
     @with_phil
     def set_extent(self, tuple shape):

@@ -35,7 +35,7 @@ import_array()
 @cython.binding(False)
 @with_phil
 def create(ObjectID loc not None, char* name, TypeID tid not None,
-    SpaceID space not None, *, char* obj_name='.', PropID lapl=None, hid_t es_id=0):
+    SpaceID space not None, *, char* obj_name='.', PropID lapl=None):
     """(ObjectID loc, STRING name, TypeID tid, SpaceID space, **kwds) => AttrID
 
     Create a new attribute, attached to an existing object.
@@ -46,8 +46,8 @@ def create(ObjectID loc not None, char* name, TypeID tid not None,
     PropID lapl
         Link access property list for obj_name
     """
-    return AttrID(H5Acreate_by_name_async(loc.id, obj_name, name, tid.id,
-            space.id, H5P_DEFAULT, H5P_DEFAULT, pdefault(lapl), es_id))
+    return AttrID(H5Acreate_by_name(loc.id, obj_name, name, tid.id,
+            space.id, H5P_DEFAULT, H5P_DEFAULT, pdefault(lapl)))
 
 #IF HDF5_VERSION >= (1, 13, 0):
 @cython.binding(False)
@@ -66,7 +66,7 @@ def create_async(ObjectID loc not None, char* name, TypeID tid not None,
     """
     print("Using H5Acreate_by_name_async")
     return AttrID(H5Acreate_by_name_async(loc.id, obj_name, name, tid.id,
-	    space.id, H5P_DEFAULT, H5P_DEFAULT, pdefault(lapl), 0))
+	    space.id, H5P_DEFAULT, H5P_DEFAULT, pdefault(lapl), es_id))
 
 # --- open, open_by_name, open_by_idx ---
 @cython.binding(False)
@@ -112,6 +112,7 @@ def open_async(ObjectID loc not None, char* name=NULL, int index=-1, *,
         raise TypeError("Exactly one of name or idx must be specified")
 
     if name != NULL:
+        print("Using H5Aopen_by_name_async")
         return AttrID(H5Aopen_by_name_async(loc.id, obj_name, name,
                         H5P_DEFAULT, pdefault(lapl), es_id))
     else:
@@ -135,12 +136,25 @@ def exists(ObjectID loc not None, char* name, *,
     """
     return <bint>H5Aexists_by_name(loc.id, obj_name, name, pdefault(lapl))
 
+@with_phil
+def exists_async(ObjectID loc not None, char* name, *,
+            char* obj_name=".", PropID lapl=None, hid_t es_id=0):
+    """(ObjectID loc, STRING name, **kwds) => BOOL
 
+    Determine if an attribute is attached to this object.  Keywords:
+
+    STRING obj_name (".")
+        Look for attributes attached to this group member
+
+    PropID lapl (None):
+        Link access property list for obj_name
+    """
+    return <bint>H5Aexists_by_name(loc.id, obj_name, name, pdefault(lapl))
 # --- rename, rename_by_name ---
 
 @with_phil
 def rename(ObjectID loc not None, char* name, char* new_name, *,
-    char* obj_name='.', PropID lapl=None):
+    char* obj_name='.', PropID lapl=None, es_id=None):
     """(ObjectID loc, STRING name, STRING new_name, **kwds)
 
     Rename an attribute.  Keywords:
@@ -151,12 +165,16 @@ def rename(ObjectID loc not None, char* name, char* new_name, *,
     PropID lapl (None)
         Link access property list for obj_name
     """
-    H5Arename_by_name(loc.id, obj_name, name, new_name, pdefault(lapl))
+    if es_id is None:
+        H5Arename_by_name(loc.id, obj_name, name, new_name, pdefault(lapl))
+    else:
+        H5Arename_by_name_async(loc.id, obj_name, name, new_name, pdefault(lapl), es_id.es_id)
     
 #IF HDF5_VERSION >= (1, 13, 0):
 @with_phil
 def rename_async(ObjectID loc not None, char* name, char* new_name, *, char* obj_name='.', PropID lapl=None, hid_t es_id=0):
 
+    print("Using H5Arename_by_name_async")
     H5Arename_by_name_async(loc.id, obj_name, name, new_name, pdefault(lapl), es_id)
 
 
@@ -376,7 +394,7 @@ cdef class AttrID(ObjectID):
 
 
     @with_phil
-    def read(self, ndarray arr not None, TypeID mtype=None):
+    def read(self, ndarray arr not None, TypeID mtype=None, es_id=None):
         """(NDARRAY arr, TypeID mtype=None)
 
         Read the attribute data into the given Numpy array.  Note that the
@@ -390,7 +408,10 @@ cdef class AttrID(ObjectID):
         """
         cdef hid_t space_id
         space_id = 0
-
+        if es_id is None:
+            esid = 0
+        else:
+            esid = es_id.es_id
         try:
             space_id = H5Aget_space(self.id)
             check_numpy_write(arr, space_id)
@@ -398,7 +419,7 @@ cdef class AttrID(ObjectID):
             if mtype is None:
                 mtype = py_create(arr.dtype)
 
-            attr_rw(self.id, mtype.id, PyArray_DATA(arr), 1)
+            attr_rw(self.id, mtype.id, PyArray_DATA(arr), 1, esid)
 
         finally:
             if space_id:
@@ -406,7 +427,7 @@ cdef class AttrID(ObjectID):
 
 
     @with_phil
-    def write(self, ndarray arr not None, TypeID mtype=None):
+    def write(self, ndarray arr not None, TypeID mtype=None, es_id=None):
         """(NDARRAY arr)
 
         Write the contents of a Numpy array to the attribute.  Note that
@@ -418,7 +439,10 @@ cdef class AttrID(ObjectID):
         """
         cdef hid_t space_id
         space_id = 0
-
+        if es_id is None:
+            esid = 0
+        else:
+            esid = es_id.es_id
         try:
             space_id = H5Aget_space(self.id)
             check_numpy_read(arr, space_id)
@@ -426,7 +450,7 @@ cdef class AttrID(ObjectID):
             if mtype is None:
                 mtype = py_create(arr.dtype)
 
-            attr_rw(self.id, mtype.id, PyArray_DATA(arr), 0)
+            attr_rw(self.id, mtype.id, PyArray_DATA(arr), 0, esid)
 
         finally:
             if space_id:

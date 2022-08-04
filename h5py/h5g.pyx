@@ -153,7 +153,7 @@ IF HDF5_VERSION >= (1, 13, 0):
 
         Open an existing HDF5 group, attached to some other group.
         """
-        print('Using async ')
+        print('Using H5Gopen_async ')
         return GroupID(H5Gopen_async(loc.id, name, H5P_DEFAULT,es_id))
 
 @with_phil

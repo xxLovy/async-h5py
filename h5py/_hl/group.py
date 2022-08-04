@@ -38,6 +38,7 @@ class Group(HLObject, MutableMappingHDF5):
             if not isinstance(bind, h5g.GroupID):
                 raise ValueError("%s is not a GroupID" % bind)
             super().__init__(bind)
+        self.es_id=None
 
 
     _gcpl_crt_order = h5p.create(h5p.GROUP_CREATE)
@@ -84,6 +85,9 @@ class Group(HLObject, MutableMappingHDF5):
             esid = 0
         else:
             esid = es_id.es_id
+            self.es_id=es_id
+            print(self)
+            print(self.es_id)
         with phil:
             name, lcpl = self._e(name, lcpl=True)
             gcpl = Group._gcpl_crt_order if track_order else None
@@ -299,10 +303,10 @@ class Group(HLObject, MutableMappingHDF5):
                 shape = (shape,)
 
             try:
-                if es_id is None:
+                if self.es_id is None:
                     dsid = dataset.open_dset(self, self._e(name), **kwds)
                 else:
-                    dsid = dataset.open_dset_async(self, self._e(name), es_id=es_id.es_id, **kwds)
+                    dsid = dataset.open_dset_async(self, self._e(name), es_id=self.es_id.es_id, **kwds)
                 dset = dataset.Dataset(dsid)
             except KeyError:
                 dset = self[name]
@@ -383,7 +387,10 @@ class Group(HLObject, MutableMappingHDF5):
             if oid is None:
                 raise ValueError("Invalid HDF5 object reference")
         elif isinstance(name, (bytes, str)):
-            oid = h5o.open(self.id, self._e(name), lapl=self._lapl)
+            if self.es_id is None:
+                oid = h5o.open(self.id, self._e(name), lapl=self._lapl)
+            else:
+                oid = h5o.open_async(self.id, self._e(name), lapl=self._lapl, es_id=self.es_id.es_id)
         else:
             raise TypeError("Accessing a group is done with bytes or str, "
                             " not {}".format(type(name)))
