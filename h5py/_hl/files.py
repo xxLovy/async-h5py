@@ -645,8 +645,8 @@ class File(Group):
                 self.id.close()
                 _objects.nonlocal_close()
                 
-    def close_async(self):
-        h5f.close_async(self.id, es_id=None)
+    def close_async(self, es_id=None):
+        self.id.close_async(es_id.es_id)
         self.close()
         
     def flush(self):

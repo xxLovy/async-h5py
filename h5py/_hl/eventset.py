@@ -14,10 +14,21 @@ from .. import version
 
 class Eventset():
 	
-	def __init__(self):
-		self.es_id=h5es.create()
+	def __init__(self, es_id=None):
+		if es_id is not None:
+			try:
+				if type(es_id) != int:
+					raise ValueError("ValueError: es_id must be an int")
+				elif es_id < 0:
+					raise ValueError("ValueError: Negative number are not allowed")
+			except ValueError as v:
+				print(v)
+			self.es_id=es_id
+		else:
+			self.es_id=h5es.create()
 		self.num_in_progress = 0
 		self.op_failed = False
+	     
 	
 	def wait(self, timeout):
 		forever = 2*sys.maxsize +1

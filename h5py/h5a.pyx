@@ -149,7 +149,8 @@ def exists_async(ObjectID loc not None, char* name, *,
     PropID lapl (None):
         Link access property list for obj_name
     """
-    return <bint>H5Aexists_by_name(loc.id, obj_name, name, pdefault(lapl))
+    cdef hbool_t *exists
+    return <bint>H5Aexists_by_name_async(loc.id, obj_name, name, exists, pdefault(lapl), es_id)
 # --- rename, rename_by_name ---
 
 @with_phil

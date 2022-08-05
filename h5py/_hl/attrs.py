@@ -202,11 +202,18 @@ class AttributeManager(base.MutableMappingHDF5, base.CommonStateObject):
             # attributes with subsequent rename, doing that would trigger
             # the error discussed in the above issue
             attr_exists = False
-            if h5a.exists(self._id, self._e(name)):
-                attr_exists = True
-                tempname = uuid.uuid4().hex
+            if self.es_id is None:
+                if h5a.exists(self._id, self._e(name)):
+                    attr_exists = True
+                    tempname = uuid.uuid4().hex
+                else:
+                    tempname = name
             else:
-                tempname = name
+                if h5a.exists_async(self._id, self._e(name), es_id=self.es_id.es_id):
+                    attr_exists = True
+                    tempname = uuid.uuid4().hex
+                else:
+                    tempname = name
             
             if self.es_id is None:
                 attr = h5a.create(self._id, self._e(tempname), htype, space)
@@ -290,7 +297,10 @@ class AttributeManager(base.MutableMappingHDF5, base.CommonStateObject):
     @with_phil
     def __contains__(self, name):
         """ Determine if an attribute exists, by name. """
-        return h5a.exists(self._id, self._e(name))
+        if self.es_id is None:
+            return h5a.exists(self._id, self._e(name))
+        else:
+            return h5a.exists_async(self._id, self._e(name), es_id=self.es_id.es_id)
 
     @with_phil
     def __repr__(self):

@@ -385,6 +385,14 @@ cdef class FileID(GroupID):
         """
         self._close()
         _objects.nonlocal_close()
+        
+    @with_phil
+    def close_async(self, hid_t es_id=0):
+        """
+        calls H5Fclose_async
+        """
+        print("Using H5Fclose_async")
+        H5Fclose_async(self.id, es_id)
 
     @with_phil
     def _close_open_objects(self, int types):
