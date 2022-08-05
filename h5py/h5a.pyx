@@ -139,18 +139,11 @@ def exists(ObjectID loc not None, char* name, *,
 @with_phil
 def exists_async(ObjectID loc not None, char* name, *,
             char* obj_name=".", PropID lapl=None, hid_t es_id=0):
-    """(ObjectID loc, STRING name, **kwds) => BOOL
-
-    Determine if an attribute is attached to this object.  Keywords:
-
-    STRING obj_name (".")
-        Look for attributes attached to this group member
-
-    PropID lapl (None):
-        Link access property list for obj_name
+    """async verison of exists
     """
-    cdef hbool_t *exists
-    return <bint>H5Aexists_by_name_async(loc.id, obj_name, name, exists, pdefault(lapl), es_id)
+    cdef hbool_t exists
+    print('Using H5Aexists_by_name_async')
+    return <bint>H5Aexists_by_name_async(loc.id, obj_name, name, &exists, pdefault(lapl), es_id)
 # --- rename, rename_by_name ---
 
 @with_phil

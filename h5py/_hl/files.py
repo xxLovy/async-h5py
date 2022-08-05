@@ -344,6 +344,9 @@ class File(Group):
         # hdf5 complains that a file identifier is an invalid location for an
         # attribute. Instead of self, pass the root group to AttributeManager:
         from . import attrs
+        if self.es_id is not None:
+            raise ValueError("es_id must be set to None when using synchronous mode")
+            
         with phil:
             return attrs.AttributeManager(self['/'])
 
@@ -353,6 +356,8 @@ class File(Group):
         # hdf5 complains that a file identifier is an invalid location for an
         # attribute. Instead of self, pass the root group to AttributeManager:
         from . import attrs
+        if self.es_id is None:
+            raise ValueError("es_id cannot be None when using asynchronous mode")
         with phil:
             return attrs.AttributeManager(self['/'], es_id=self.es_id)
 

@@ -331,16 +331,25 @@ class HLObject(CommonStateObject):
     @property
     def attrs(self):
         """ Attributes attached to this object """
+        # hdf5 complains that a file identifier is an invalid location for an
+        # attribute. Instead of self, pass the root group to AttributeManager:
         from . import attrs
-        with phil:
-            return attrs.AttributeManager(self)
+        if self.es_id is not None:
+            raise ValueError("es_id must be set to None when using synchronous mode")
             
+        with phil:
+            return attrs.AttributeManager(self['/'])
+
     @property
     def attrs_async(self):
         """ Attributes attached to this object """
+        # hdf5 complains that a file identifier is an invalid location for an
+        # attribute. Instead of self, pass the root group to AttributeManager:
         from . import attrs
+        if self.es_id is None:
+            raise ValueError("es_id cannot be None when using asynchronous mode")
         with phil:
-            return attrs.AttributeManager(self, es_id=self.es_id)
+            return attrs.AttributeManager(self['/'], es_id=self.es_id)
 
     @with_phil
     def __init__(self, oid):
