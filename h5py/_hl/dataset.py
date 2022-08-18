@@ -641,11 +641,12 @@ class Dataset(HLObject):
         #return self.es_id
 
     @with_phil
-    def __init__(self, bind, *, readonly=False):
+    def __init__(self, bind, *, readonly=False, es_id=None):
         """ Create a new Dataset object by binding to a low-level DatasetID.
         """
         if not isinstance(bind, h5d.DatasetID):
             raise ValueError("%s is not a DatasetID" % bind)
+        self.es_id= es_id
         super().__init__(bind)
 
         self._dcpl = self.id.get_create_plist()
@@ -655,7 +656,6 @@ class Dataset(HLObject):
         self._cache_props = {}
         self._local = local()
         self._local.astype = None
-        self.es_id= None
 
     def resize(self, size, axis=None):
         """ Resize the dataset, or the specified axis.
@@ -688,7 +688,7 @@ class Dataset(HLObject):
             size = tuple(size)
             self.id.set_extent(size)
             #h5f.flush(self.id)  # THG recommends
-    def resize_async(self, size, axis=None, es_id=None):
+    def resize_async(self, size, axis=None, es=None):
         """ 
         """
         with phil:
@@ -706,10 +706,10 @@ class Dataset(HLObject):
                 size[axis] = newlen
 
             size = tuple(size)
-            if es_id is None:
+            if es is None:
                 self.id.set_extent(size)
             else:
-                self.id.set_extent_async(size, es_id=es_id.es_id)
+                self.id.set_extent_async(size, es_id=es.es_id)
             #h5f.flush(self.id)  # THG recommends
     @with_phil
     def __len__(self):
@@ -1058,7 +1058,7 @@ class Dataset(HLObject):
             for mspace in dest_sel.broadcast(source_sel.array_shape):
                 self.id.read(mspace, fspace, dest, dxpl=self._dxpl)
                 
-    def read_direct_async(self, dest, source_sel=None, dest_sel=None, es_id=None):
+    def read_direct_async(self, dest, source_sel=None, dest_sel=None, es=None):
         """ Read data directly from HDF5 into an existing NumPy array.
 
         The destination array must be C-contiguous and writable.
@@ -1081,10 +1081,10 @@ class Dataset(HLObject):
                 dest_sel = sel.select(dest.shape, dest_sel)
 
             for mspace in dest_sel.broadcast(source_sel.array_shape):
-                if es_id is None:
-                    self.id.read_async(mspace, fspace, dest, dxpl=self._dxpl, es_id=0)
+                if es is None:
+                    self.id.read_async(mspace, fspace, dest, dxpl=self._dxpl, es_id=self.es_id)
                 else:
-                    self.id.read_async(mspace, fspace, dest, dxpl=self._dxpl, es_id=es_id.es_id)
+                    self.id.read_async(mspace, fspace, dest, dxpl=self._dxpl, es_id=es.es_id)
 
     def write_direct(self, source, source_sel=None, dest_sel=None):
         """ Write data directly to HDF5 from a NumPy array.
@@ -1111,7 +1111,7 @@ class Dataset(HLObject):
             for fspace in dest_sel.broadcast(source_sel.array_shape):
                 self.id.write(mspace, fspace, source, dxpl=self._dxpl)
 
-    def write_direct_async(self, source, source_sel=None, dest_sel=None, es_id=None):
+    def write_direct_async(self, source, source_sel=None, dest_sel=None, es=None):
         """ Write data directly to HDF5 from a NumPy array.
 
         The source array must be C-contiguous.  Selections must be
@@ -1134,7 +1134,7 @@ class Dataset(HLObject):
                 dest_sel = sel.select(self.shape, dest_sel, self)
 
             for fspace in dest_sel.broadcast(source_sel.array_shape):
-                self.id.write_async(mspace, fspace, source, dxpl=self._dxpl, es_id=es_id.es_id)
+                self.id.write_async(mspace, fspace, source, dxpl=self._dxpl, es_id=es.es_id)
 
     @with_phil
     def __array__(self, dtype=None):
@@ -1219,3 +1219,4 @@ class Dataset(HLObject):
         You can optionally pass a name to associate with this scale.
         """
         h5ds.set_scale(self._id, self._e(name))
+

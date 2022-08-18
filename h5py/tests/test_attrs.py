@@ -308,17 +308,17 @@ class TestAsync(BaseAttrs):
     def tearDown(self):
         pass
         
-    def test_create(self):
+    def test_create_async(self):
         """ Attribute creation by direct assignment """
         from h5py import Eventset
+        from h5py import File_async
         es_id = Eventset()
         import sys
         wait_forever = sys.maxsize
-        self.f = File(self.mktemp(), 'w', es_id=es_id)
-        dset = self.f.create_dataset_async("dset", dtype=int, es_id=es_id)
+        self.f = File_async(self.mktemp(), 'w', es=es_id)
+        dset = self.f.create_dataset_async("dset", dtype=int, es=es_id)
         
-        dset.es_id=es_id
-        dset.attrs['a'] = 4.0
+        dset.attrs_async['a'] = 4.0
         
         es_id.wait(wait_forever)
         self.assertEqual(es_id.num_in_progress, 0)
@@ -332,20 +332,22 @@ class TestAsync(BaseAttrs):
         
         if self.f:
             self.f.close()
+            #self.f.close_async()
             es_id.wait(wait_forever)
             self.assertEqual(es_id.num_in_progress, 0)
             self.assertEqual(es_id.op_failed, False)
         if es_id:
             es_id.close()
             
-    def test_modify(self):
+    def test_modify_async(self):
         """ Attributes are modified by direct assignment"""
         from h5py import Eventset
+        from h5py import File_async
         es_id = Eventset()
         import sys
         wait_forever = sys.maxsize
-        self.f = File(self.mktemp(), 'w', es_id=es_id)
-        dset = self.f.create_dataset_async("dset", dtype=int, es_id=es_id)
+        self.f = File_async(self.mktemp(), 'w', es=es_id)
+        dset = self.f.create_dataset_async("dset", dtype=int, es=es_id)
         
         dset.attrs['a'] = 3
         es_id.wait(wait_forever)
@@ -362,6 +364,7 @@ class TestAsync(BaseAttrs):
         self.assertEqual(dset.attrs['a'], 4)   
         if self.f:
             self.f.close()
+            #self.f.close_async()
             es_id.wait(wait_forever)
             self.assertEqual(es_id.num_in_progress, 0)
             self.assertEqual(es_id.op_failed, False)

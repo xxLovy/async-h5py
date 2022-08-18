@@ -47,8 +47,9 @@ class AttributeManager(base.MutableMappingHDF5, base.CommonStateObject):
     def __init__(self, parent, es_id=None):
         """ Private constructor.
         """
-        self._id = parent.id
         self.es_id = es_id
+        self._id = parent.id
+
     @with_phil
     def __getitem__(self, name):
         """ Read the value of an attribute.

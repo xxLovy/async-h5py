@@ -143,7 +143,7 @@ def exists_async(ObjectID loc not None, char* name, *,
     """
     cdef hbool_t exists
     print('Using H5Aexists_by_name_async')
-    return <bint>H5Aexists_by_name_async(loc.id, obj_name, name, &exists, pdefault(lapl), es_id)
+    return <bint>H5Aexists_by_name(loc.id, obj_name, name, pdefault(lapl))
 # --- rename, rename_by_name ---
 
 @with_phil
@@ -412,8 +412,8 @@ cdef class AttrID(ObjectID):
 
             if mtype is None:
                 mtype = py_create(arr.dtype)
-
             attr_rw(self.id, mtype.id, PyArray_DATA(arr), 1, esid)
+            
 
         finally:
             if space_id:

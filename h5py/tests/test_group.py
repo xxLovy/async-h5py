@@ -1118,17 +1118,18 @@ class TestAsync(BaseGroup):
     import sys
     def test_create_async(self):
         from h5py import Eventset
+        from h5py import File_async
         """ test create_group_async """
         wait_forever = sys.maxsize
         es_id = Eventset()
-        self.f = File(self.mktemp(), 'w', es_id=es_id)
-        grp = self.f.create_group_async('foo', es_id=es_id)
+        self.f = File_async(self.mktemp(), 'w', es=es_id)
+        grp = self.f.create_group_async('foo', es=es_id)
         self.assertIsInstance(grp, Group)
 
-        grp2 = self.f.create_group_async(b'bar', es_id=es_id)
+        grp2 = self.f.create_group_async(b'bar', es=es_id)
         self.assertIsInstance(grp2, Group)
         if self.f:
-            self.f.close()
+            self.f.close_async()
             es_id.wait(wait_forever)
             assert es_id.num_in_progress==0
             assert es_id.op_failed==False
@@ -1138,18 +1139,19 @@ class TestAsync(BaseGroup):
     def test_open(self):
         """ test open_async """
         from h5py import Eventset
+        from h5py import File_async
         wait_forever = sys.maxsize
         es_id = Eventset()
-        self.f = File(self.mktemp(), 'w', es_id=es_id)
+        self.f = File_async(self.mktemp(), 'w', es=es_id)
         
-        grp = self.f.create_group_async('foo', es_id=es_id)
+        grp = self.f.create_group_async('foo', es=es_id)
         grp2 = self.f['foo']
         grp3 = self.f['/foo']
         self.assertEqual(grp, grp2)
         self.assertEqual(grp, grp3)
         
         if self.f:
-            self.f.close()
+            self.f.close_async()
             es_id.wait(wait_forever)
             assert es_id.num_in_progress==0
             assert es_id.op_failed==False

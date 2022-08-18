@@ -366,7 +366,8 @@ cdef class FileID(GroupID):
         * Hashable: Yes, unique to the file (but not the access mode)
         * Equality: Hash comparison
     """
-
+    
+                
     property name:
         """ File name on disk (according to h5f.get_name()) """
         def __get__(self):

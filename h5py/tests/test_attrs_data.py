@@ -262,7 +262,7 @@ class TestWriteException(BaseAttrs):
             self.f.attrs['x']
             
             
-'''            
+         
 @ut.skipUnless(h5py.version.hdf5_version_tuple >= (1, 13, 0), 'HDF5 1.13.0 required')
 class TestAsync(BaseAttrs):
     def setUp(self):
@@ -275,14 +275,9 @@ class TestAsync(BaseAttrs):
         es_id = Eventset()
         import sys
         wait_forever = sys.maxsize
-        es_id.wait(wait_forever)
-        assert es_id.num_in_progress==0
-        assert es_id.op_failed==False
-        self.f = File(self.mktemp(), 'w', es_id=es_id)
-        
-        self.assertEqual(
-            self.empty_obj, self.f.attrs['x']
-        )
+        self.f = File(self.mktemp(), 'w', es=es_id)
+        self.f.attrs_async["x"]=2
+        self.assertEqual(2, self.f.attrs_async['x'])
         
         if self.f:
             self.f.close()
@@ -296,10 +291,14 @@ class TestAsync(BaseAttrs):
         es_id = Eventset()
         import sys
         wait_forever = sys.maxsize
-        self.f = File(self.mktemp(), 'w', es_id=es_id)
+        self.f = File(self.mktemp(), 'w', es=es_id)
         
-        self.f.attrs["y"] = self.empty_obj
-        self.assertTrue(is_empty_dataspace(h5a.open(self.f.id, b'y')))
+        self.f.attrs_async["y"] = 2
+        
+        es_id.wait(wait_forever)
+        self.assertEqual(es_id.num_in_progress, 0)
+        self.assertEqual(es_id.op_failed, False)
+        self.assertEqual(2, self.f.attrs_async["y"])
         
         if self.f:
             self.f.close()
@@ -313,20 +312,27 @@ class TestAsync(BaseAttrs):
         es_id = Eventset()
         import sys
         wait_forever = sys.maxsize
-        self.f = File(self.mktemp(), 'w', es_id=es_id)
+        self.f = File(self.mktemp(), 'w', es=es_id)
+        self.f.attrs_async["x"]=1
+        es_id.wait(wait_forever)
+        self.assertEqual(es_id.num_in_progress, 0)
+        self.assertEqual(es_id.op_failed, False)
+        self.assertEqual(1, self.f.attrs_async["x"])
         
-        with self.assertRaises(IOError):
-            self.f.attrs.modify('x', 1)
+        self.f.attrs_async.modify("x", 2)
+        es_id.wait(wait_forever)
+        self.assertEqual(es_id.num_in_progress, 0)
+        self.assertEqual(es_id.op_failed, False)
+        self.assertEqual(2, self.f.attrs_async["x"])
             
         if self.f:
-            self.f.close()
+            self.f.close_async()
             es_id.wait(wait_forever)
             self.assertEqual(es_id.num_in_progress, 0)
             self.assertEqual(es_id.op_failed, False)
         if es_id:
-            es_id.close()
-'''            
-            
+            es_id.close()          
+           
             
             
             

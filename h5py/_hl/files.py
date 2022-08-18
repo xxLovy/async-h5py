@@ -344,9 +344,7 @@ class File(Group):
         # hdf5 complains that a file identifier is an invalid location for an
         # attribute. Instead of self, pass the root group to AttributeManager:
         from . import attrs
-        if self.es_id is not None:
-            raise ValueError("es_id must be set to None when using synchronous mode")
-            
+        self.es_id=None
         with phil:
             return attrs.AttributeManager(self['/'])
 
@@ -356,8 +354,6 @@ class File(Group):
         # hdf5 complains that a file identifier is an invalid location for an
         # attribute. Instead of self, pass the root group to AttributeManager:
         from . import attrs
-        if self.es_id is None:
-            raise ValueError("es_id cannot be None when using asynchronous mode")
         with phil:
             return attrs.AttributeManager(self['/'], es_id=self.es_id)
 
@@ -452,7 +448,7 @@ class File(Group):
                  rdcc_nslots=None, rdcc_nbytes=None, rdcc_w0=None, track_order=None,
                  fs_strategy=None, fs_persist=False, fs_threshold=1, fs_page_size=None,
                  page_buf_size=None, min_meta_keep=0, min_raw_keep=0, locking=None,
-                 alignment_threshold=1, alignment_interval=1, meta_block_size=None, es_id=None, **kwds):
+                 alignment_threshold=1, alignment_interval=1, meta_block_size=None, es=None, **kwds):
         """Create a new file object.
 
         See the h5py user guide for a detailed explanation of the options.
@@ -623,17 +619,17 @@ class File(Group):
                 fcpl = make_fcpl(track_order=track_order, fs_strategy=fs_strategy,
                                  fs_persist=fs_persist, fs_threshold=fs_threshold,
                                  fs_page_size=fs_page_size)
-                if es_id is None:
+                if es is None:
                     fid = make_fid(name, mode, userblock_size, fapl, fcpl, swmr=swmr)
                 else:
-                    fid = make_fid_async(name, mode, userblock_size, fapl, fcpl, swmr=swmr, es_id=es_id.es_id)
+                    fid = make_fid_async(name, mode, userblock_size, fapl, fcpl, swmr=swmr, es_id=es.es_id)
 
             if isinstance(libver, tuple):
                 self._libver = libver
             else:
                 self._libver = (libver, 'latest')
 
-        super().__init__(fid)
+        super().__init__(fid, es)
 
     def close(self):
         """ Close the file.  All open objects become invalid """
@@ -651,9 +647,13 @@ class File(Group):
                 _objects.nonlocal_close()
                 
     def close_async(self, es_id=None):
+        if es_id is None:
+            es_id=self.es_id
         self.id.close_async(es_id.es_id)
-        self.close()
+        #import sys
+        #es_id.wait(sys.maxsize)
         
+
     def flush(self):
         """ Tell the HDF5 library to flush its buffers.
         """
@@ -664,7 +664,7 @@ class File(Group):
         """ Tell the HDF5 library to flush its buffers.
         """
         if es_id is None:
-            h5f.flash_async(self.id, 0)
+            h5f.flush_async(self.id, es_id=self.es_id.es_id)
         else:
             with phil:
                 h5f.flush_async(self.id, es_id=es_id.es_id)
@@ -691,3 +691,8 @@ class File(Group):
             r = f'<HDF5 file "{os.path.basename(filename)}" (mode {self.mode})>'
 
         return r
+
+class File_async(File):
+    pass
+
+

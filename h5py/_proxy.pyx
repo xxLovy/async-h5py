@@ -34,6 +34,7 @@ cdef herr_t attr_rw(hid_t attr, hid_t mtype, void *progbuf, int read, hid_t es_i
         atype = H5Aget_type(attr)
 
         if not (needs_proxy(atype) or needs_proxy(mtype)):
+            print("------------------------------------------------1")
             if read:
                 if es_id == 0:
                     H5Aread(attr, mtype, progbuf)
@@ -48,7 +49,7 @@ cdef herr_t attr_rw(hid_t attr, hid_t mtype, void *progbuf, int read, hid_t es_i
                     H5Awrite_async(attr, mtype, progbuf, es_id)
 
         else:
-
+            print("------------------------------------------------2")
             asize = H5Tget_size(atype)
             msize = H5Tget_size(mtype)
             aspace = H5Aget_space(attr)

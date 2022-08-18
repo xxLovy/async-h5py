@@ -59,6 +59,7 @@ from ._hl import filters
 from ._hl.base import is_hdf5, HLObject, Empty
 from ._hl.files import (
     File,
+    File_async,
     register_driver,
     unregister_driver,
     registered_drivers,

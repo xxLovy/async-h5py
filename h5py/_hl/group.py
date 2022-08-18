@@ -31,14 +31,14 @@ class Group(HLObject, MutableMappingHDF5):
     """ Represents an HDF5 group.
     """
 
-    def __init__(self, bind):
+    def __init__(self, bind, es_id=None):
         """ Create a new Group object by binding to a low-level GroupID.
         """
         with phil:
             if not isinstance(bind, h5g.GroupID):
                 raise ValueError("%s is not a GroupID" % bind)
+            self.es_id=es_id
             super().__init__(bind)
-        self.es_id=None
 
 
     _gcpl_crt_order = h5p.create(h5p.GROUP_CREATE)
@@ -48,7 +48,7 @@ class Group(HLObject, MutableMappingHDF5):
         h5p.CRT_ORDER_TRACKED | h5p.CRT_ORDER_INDEXED)
 
 
-    def create_group(self, name, track_order=None):
+    def create_group(self, name, track_order=None, es=None):
         """ Create and return a new subgroup.
 
         Name may be absolute or relative.  Fails if the target name already
@@ -64,11 +64,15 @@ class Group(HLObject, MutableMappingHDF5):
         with phil:
             name, lcpl = self._e(name, lcpl=True)
             gcpl = Group._gcpl_crt_order if track_order else None
-            gid = h5g.create(self.id, name, lcpl=lcpl, gcpl=gcpl)
+            if es is None:
+                gid = h5g.create(self.id, name, lcpl=lcpl, gcpl=gcpl)
+            else:
+                gid = h5g.create_async(self.id, name, lcpl=lcpl, gcpl=gcpl, es_id=es.es_id)
+            
             return Group(gid)
 
 	#IF HDF5_VERSION >= (1, 13, 0): 
-    def create_group_async(self, name, track_order=None, es_id=None):
+    def create_group_async(self, name, track_order=None, es=None):
         """ Create and return a new subgroup.
 
         Name may be absolute or relative.  Fails if the target name already
@@ -78,21 +82,22 @@ class Group(HLObject, MutableMappingHDF5):
         Track dataset/group/attribute creation order under this group
         if True. If None use global default h5.get_config().track_order.
         """
+        if (self.es_id is not None) and (es is None):
+            es=self.es_id
+
         if track_order is None:
             track_order = h5.get_config().track_order
         
-        if es_id is None:
+        if es is None:
             esid = 0
         else:
-            esid = es_id.es_id
-            self.es_id=es_id
-            print(self)
-            print(self.es_id)
+            esid = es.es_id
+            self.es_id=es
         with phil:
             name, lcpl = self._e(name, lcpl=True)
             gcpl = Group._gcpl_crt_order if track_order else None
             gid = h5g.create_async(self.id, name, lcpl=lcpl, gcpl=gcpl, es_id=esid)
-            return Group(gid)
+            return Group(gid, es)
 
     def create_dataset(self, name, shape=None, dtype=None, data=None, **kwds):
         """ Create a new HDF5 dataset
@@ -190,7 +195,9 @@ class Group(HLObject, MutableMappingHDF5):
             dset = dataset.Dataset(dsid)
             return dset
 	#IF HDF5_VERSION >= (1, 13, 0):
-    def create_dataset_async(self, name, shape=None, dtype=None, data=None, es_id=None, **kwds):
+    def create_dataset_async(self, name, shape=None, dtype=None, data=None, es=None, **kwds):
+        if (self.es_id is not None) and (es is None):
+            es=self.es_id
         if 'track_order' not in kwds:
             kwds['track_order'] = h5.get_config().track_order
 
@@ -199,7 +206,6 @@ class Group(HLObject, MutableMappingHDF5):
 
         if 'virtual_prefix' in kwds:
             kwds['virtual_prefix'] = self._e(kwds['virtual_prefix'])
-
         with phil:
             group = self
             if name:
@@ -207,8 +213,8 @@ class Group(HLObject, MutableMappingHDF5):
                 if b'/' in name.lstrip(b'/'):
                     parent_path, name = name.rsplit(b'/', 1)
                     group = self.require_group(parent_path)
-            dsid = dataset.make_new_dset(group, shape, dtype, data, name, es_id=es_id, **kwds)
-            dset = dataset.Dataset(dsid)
+            dsid = dataset.make_new_dset(group, shape, dtype, data, name, es_id=es, **kwds)
+            dset = dataset.Dataset(dsid, es_id=es)
             return dset
 		 
 		 
@@ -372,7 +378,7 @@ class Group(HLObject, MutableMappingHDF5):
                 if es_id is None:
                     return self.create_group(name)
                 else:
-                    return self.create_group_async(name, es_id=es_id)
+                    return self.create_group_async(name, es=es_id)
             grp = self[name]
             if not isinstance(grp, Group):
                 raise TypeError("Incompatible object (%s) already exists" % grp.__class__.__name__)

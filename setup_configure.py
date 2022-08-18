@@ -105,7 +105,7 @@ class BuildConfig:
 
         Returns (include_dirs, lib_dirs, define_macros)
         """
-        hdf5 = "/home/xuan/hdf5/install"
+        hdf5 = "/home/test/hdf5/install"
         hdf5_includedir = os.environ.get('HDF5_INCLUDEDIR')
         hdf5_libdir = os.environ.get('HDF5_LIBDIR')
         hdf5_pkgconfig_name = os.environ.get('HDF5_PKGCONFIG_NAME')
@@ -238,7 +238,7 @@ class HDF5LibWrapper:
             default_path = 'cyghdf5-200.dll'
             regexp = re.compile(r'^cyghdf5-\d+.dll$')
         else:
-            default_path = '/home/xuan/hdf5/install/lib/libhdf5.so'
+            default_path = '/home/test/hdf5/install/lib/libhdf5.so'
             regexp = re.compile(r'^libhdf5.so')
 
         path = None
