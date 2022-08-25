@@ -208,7 +208,7 @@ def make_fcpl(track_order=False, fs_strategy=None, fs_persist=False,
     return plist
 
 
-def make_fid(name, mode, userblock_size, fapl, fcpl=None, swmr=False):
+def make_fid(name, mode, userblock_size, fapl, fcpl=None, swmr=False, es_id = None):
     """ Get a new FileID by opening or creating a file.
     Also validates mode argument."""
 
@@ -228,19 +228,19 @@ def make_fid(name, mode, userblock_size, fapl, fcpl=None, swmr=False):
         flags = h5f.ACC_RDONLY
         if swmr and swmr_support:
             flags |= h5f.ACC_SWMR_READ
-        fid = h5f.open(name, flags, fapl=fapl)
+        fid = h5f.open(name, flags, fapl=fapl, es_id=es_id)
     elif mode == 'r+':
-        fid = h5f.open(name, h5f.ACC_RDWR, fapl=fapl)
+        fid = h5f.open(name, h5f.ACC_RDWR, fapl=fapl, es_id=es_id)
     elif mode in ['w-', 'x']:
-        fid = h5f.create(name, h5f.ACC_EXCL, fapl=fapl, fcpl=fcpl)
+        fid = h5f.create(name, h5f.ACC_EXCL, fapl=fapl, fcpl=fcpl, es_id=es_id)
     elif mode == 'w':
-        fid = h5f.create(name, h5f.ACC_TRUNC, fapl=fapl, fcpl=fcpl)
+        fid = h5f.create(name, h5f.ACC_TRUNC, fapl=fapl, fcpl=fcpl, es_id=es_id)
     elif mode == 'a':
         # Open in append mode (read/write).
         # If that fails, create a new file only if it won't clobber an
         # existing one (ACC_EXCL)
         try:
-            fid = h5f.open(name, h5f.ACC_RDWR, fapl=fapl)
+            fid = h5f.open(name, h5f.ACC_RDWR, fapl=fapl, es_id=es_id)
         # Not all drivers raise FileNotFoundError (commented those that do not)
         except FileNotFoundError if fapl.get_driver() in (
             h5fd.SEC2,
@@ -254,68 +254,7 @@ def make_fid(name, mode, userblock_size, fapl, fcpl=None, swmr=False):
             h5fd.fileobj_driver,
             h5fd.ROS3D if ros3 else -1,
         ) else OSError:
-            fid = h5f.create(name, h5f.ACC_EXCL, fapl=fapl, fcpl=fcpl)
-    else:
-        raise ValueError("Invalid mode; must be one of r, r+, w, w-, x, a")
-
-    try:
-        if userblock_size is not None:
-            existing_fcpl = fid.get_create_plist()
-            if existing_fcpl.get_userblock() != userblock_size:
-                raise ValueError("Requested userblock size (%d) does not match that of existing file (%d)" % (userblock_size, existing_fcpl.get_userblock()))
-    except Exception as e:
-        fid.close()
-        raise e
-
-    return fid
-
-def make_fid_async(name, mode, userblock_size, fapl, fcpl=None, swmr=False, es_id=0):
-    """ Get a new FileID by opening or creating a file.
-    Also validates mode argument."""
-
-    if userblock_size is not None:
-        if mode in ('r', 'r+'):
-            raise ValueError("User block may only be specified "
-                             "when creating a file")
-        try:
-            userblock_size = int(userblock_size)
-        except (TypeError, ValueError):
-            raise ValueError("User block size must be an integer")
-        if fcpl is None:
-            fcpl = h5p.create(h5p.FILE_CREATE)
-        fcpl.set_userblock(userblock_size)
-
-    if mode == 'r':
-        flags = h5f.ACC_RDONLY
-        if swmr and swmr_support:
-            flags |= h5f.ACC_SWMR_READ
-        fid = h5f.open_async(name, flags, fapl=fapl, es_id=es_id)
-    elif mode == 'r+':
-        fid = h5f.open_async(name, h5f.ACC_RDWR, fapl=fapl, es_id=es_id)
-    elif mode in ['w-', 'x']:
-        fid = h5f.create_async(name, h5f.ACC_EXCL, fapl=fapl, fcpl=fcpl, es_id=es_id)
-    elif mode == 'w':
-        fid = h5f.create_async(name, h5f.ACC_TRUNC, fapl=fapl, fcpl=fcpl, es_id=es_id)
-    elif mode == 'a':
-        # Open in append mode (read/write).
-        # If that fails, create a new file only if it won't clobber an
-        # existing one (ACC_EXCL)
-        try:
-            fid = h5f.open_async(name, h5f.ACC_RDWR, fapl=fapl, es_id=es_id)
-        # Not all drivers raise FileNotFoundError (commented those that do not)
-        except FileNotFoundError if fapl.get_driver() in (
-            h5fd.SEC2,
-            h5fd.DIRECT if direct_vfd else -1,
-            # h5fd.STDIO,
-            # h5fd.CORE,
-            h5fd.FAMILY,
-            h5fd.WINDOWS,
-            # h5fd.MPIO,
-            # h5fd.MPIPOSIX,
-            h5fd.fileobj_driver,
-            h5fd.ROS3D if ros3 else -1,
-        ) else OSError:
-            fid = h5f.create_async(name, h5f.ACC_EXCL, fapl=fapl, fcpl=fcpl, es_id=es_id)
+            fid = h5f.create(name, h5f.ACC_EXCL, fapl=fapl, fcpl=fcpl, es_id=es_id)
     else:
         raise ValueError("Invalid mode; must be one of r, r+, w, w-, x, a")
 
@@ -619,10 +558,7 @@ class File(Group):
                 fcpl = make_fcpl(track_order=track_order, fs_strategy=fs_strategy,
                                  fs_persist=fs_persist, fs_threshold=fs_threshold,
                                  fs_page_size=fs_page_size)
-                if es is None:
-                    fid = make_fid(name, mode, userblock_size, fapl, fcpl, swmr=swmr)
-                else:
-                    fid = make_fid_async(name, mode, userblock_size, fapl, fcpl, swmr=swmr, es_id=es.es_id)
+                fid = make_fid(name, mode, userblock_size, fapl, fcpl, swmr=swmr, es_id=es)
 
             if isinstance(libver, tuple):
                 self._libver = libver
@@ -649,25 +585,25 @@ class File(Group):
     def close_async(self, es_id=None):
         if es_id is None:
             es_id=self.es_id
+        
         self.id.close_async(es_id.es_id)
         #import sys
         #es_id.wait(sys.maxsize)
         
 
-    def flush(self):
+    def flush(self, es=None):
         """ Tell the HDF5 library to flush its buffers.
+        If we create a file synchronously, the H5Fflush_async will not be used
         """
         with phil:
-            h5f.flush(self.id)
+            if es is None and self.es_id is None:
+                h5f.flush(self.id)
+            elif es is None and self.es_id is not None:
+                h5f.flush(self.id, es_id=self.es_id)
+            elif es is not None:
+                h5f.flush(self.id, es_id=es)
+                
     
-    def flush_async(self, es_id=None):
-        """ Tell the HDF5 library to flush its buffers.
-        """
-        if es_id is None:
-            h5f.flush_async(self.id, es_id=self.es_id.es_id)
-        else:
-            with phil:
-                h5f.flush_async(self.id, es_id=es_id.es_id)
 
     @with_phil
     def __enter__(self):

@@ -112,13 +112,13 @@ def open_async(ObjectID loc not None, char* name=NULL, int index=-1, *,
         raise TypeError("Exactly one of name or idx must be specified")
 
     if name != NULL:
-        print("Using H5Aopen_by_name_async")
-        return AttrID(H5Aopen_by_name_async(loc.id, obj_name, name,
-                        H5P_DEFAULT, pdefault(lapl), es_id))
+        #print("Using H5Aopen_by_name_async")
+        return AttrID(H5Aopen_by_name(loc.id, obj_name, name,
+                        H5P_DEFAULT, pdefault(lapl)))
     else:
-        return AttrID(H5Aopen_by_idx_async(loc.id, obj_name,
+        return AttrID(H5Aopen_by_idx(loc.id, obj_name,
             <H5_index_t>index_type, <H5_iter_order_t>order, index,
-            H5P_DEFAULT, pdefault(lapl), es_id))
+            H5P_DEFAULT, pdefault(lapl)))
 # --- exists, exists_by_name ---
 
 @with_phil
@@ -144,6 +144,7 @@ def exists_async(ObjectID loc not None, char* name, *,
     cdef hbool_t exists
     print('Using H5Aexists_by_name_async')
     return <bint>H5Aexists_by_name(loc.id, obj_name, name, pdefault(lapl))
+    
 # --- rename, rename_by_name ---
 
 @with_phil

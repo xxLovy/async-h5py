@@ -1961,7 +1961,6 @@ class TestAsync(BaseDataset):
         es_id = Eventset()
         self.f = File_async(self.mktemp(), 'w', es=es_id)
         
-        es_id1 = Eventset()
         data0_write = np.arange(20 * 30, dtype=int)
         data1_write = np.arange(20 * 30, dtype=int)
         data1_write *= 2
@@ -1971,40 +1970,40 @@ class TestAsync(BaseDataset):
         dset0 = self.f.create_dataset_async("dset0", (20, 30), dtype=int, es=es_id)
         dset1 = self.f.create_dataset_async("dset1", (20, 30), dtype=int, es=es_id)
         # W0, R0, W1, R1, W1', W0', R0', R1'
-        dset0.write_direct_async(data0_write.reshape(20, 30), es=es_id1)
-        dset0.read_direct_async(data0_read.reshape(20, 30), es=es_id1)
+        dset0.write_direct_async(data0_write.reshape(20, 30), es=es_id)
+        dset0.read_direct_async(data0_read.reshape(20, 30), es=es_id)
         #Verify data
-        es_id1.wait(wait_forever)    
-        assert es_id1.num_in_progress==0
-        assert es_id1.op_failed==False
+        es_id.wait(wait_forever)    
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
         self.assertArrayEqual(data0_write, data0_read)
-        dset1.write_direct_async(data1_write.reshape(20, 30), es=es_id1)
-        dset1.read_direct_async(data1_read.reshape(20, 30), es=es_id1)
+        dset1.write_direct_async(data1_write.reshape(20, 30), es=es_id)
+        dset1.read_direct_async(data1_read.reshape(20, 30), es=es_id)
         # Verify data
-        es_id1.wait(wait_forever)    
-        assert es_id1.num_in_progress==0
-        assert es_id1.op_failed==False
+        es_id.wait(wait_forever)    
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
         self.assertArrayEqual(data1_write, data1_read)
         
         # Change data 0 and 1
         data0_write *= -1
         data1_write *= -1
-        dset0.write_direct_async(data0_write.reshape(20, 30), es=es_id1)
-        dset0.read_direct_async(data0_read.reshape(20, 30), es=es_id1)
+        dset0.write_direct_async(data0_write.reshape(20, 30), es=es_id)
+        dset0.read_direct_async(data0_read.reshape(20, 30), es=es_id)
         
         #Verify data
-        es_id1.wait(wait_forever)    
-        assert es_id1.num_in_progress==0
-        assert es_id1.op_failed==False
+        es_id.wait(wait_forever)    
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
         self.assertArrayEqual(data0_write, data0_read)
-        dset1.write_direct_async(data1_write.reshape(20, 30), es=es_id1)
-        dset1.read_direct_async(data1_read.reshape(20, 30), es=es_id1)
+        dset1.write_direct_async(data1_write.reshape(20, 30), es=es_id)
+        dset1.read_direct_async(data1_read.reshape(20, 30), es=es_id)
         # Verify data
-        es_id1.wait(wait_forever)    
-        assert es_id1.num_in_progress==0
-        assert es_id1.op_failed==False
+        es_id.wait(wait_forever)    
+        assert es_id.num_in_progress==0
+        assert es_id.op_failed==False
         self.assertArrayEqual(data1_write, data1_read)
-        es_id1.close()
+        es_id.close()
         if self.f:
             self.f.close_async()
             es_id.wait(wait_forever)

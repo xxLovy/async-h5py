@@ -184,7 +184,7 @@ class TestSpaceStrategy(TestCase):
         dset[...] = 1
         fid.close()
 
-'''
+
 @ut.skipIf(h5py.version.hdf5_version_tuple < (1, 10, 1),
            'Requires HDF5 1.10.1 or later')
 @pytest.mark.mpi_skip
@@ -236,7 +236,7 @@ class TestPageBuffering(TestCase):
         with File(fname, mode='r', page_buf_size=pbs-1) as f:
             fapl = f.id.get_access_plist()
             self.assertEqual(fapl.get_page_buffer_size()[0], fsp)
-'''
+
 
 class TestModes(TestCase):
 

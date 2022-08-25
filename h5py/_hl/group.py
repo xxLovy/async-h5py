@@ -64,42 +64,12 @@ class Group(HLObject, MutableMappingHDF5):
         with phil:
             name, lcpl = self._e(name, lcpl=True)
             gcpl = Group._gcpl_crt_order if track_order else None
-            if es is None:
-                gid = h5g.create(self.id, name, lcpl=lcpl, gcpl=gcpl)
-            else:
-                gid = h5g.create_async(self.id, name, lcpl=lcpl, gcpl=gcpl, es_id=es.es_id)
+            gid = h5g.create(self.id, name, lcpl=lcpl, gcpl=gcpl, es_id=es)
             
-            return Group(gid)
-
-	#IF HDF5_VERSION >= (1, 13, 0): 
-    def create_group_async(self, name, track_order=None, es=None):
-        """ Create and return a new subgroup.
-
-        Name may be absolute or relative.  Fails if the target name already
-        exists.
-
-        track_order
-        Track dataset/group/attribute creation order under this group
-        if True. If None use global default h5.get_config().track_order.
-        """
-        if (self.es_id is not None) and (es is None):
-            es=self.es_id
-
-        if track_order is None:
-            track_order = h5.get_config().track_order
-        
-        if es is None:
-            esid = 0
-        else:
-            esid = es.es_id
-            self.es_id=es
-        with phil:
-            name, lcpl = self._e(name, lcpl=True)
-            gcpl = Group._gcpl_crt_order if track_order else None
-            gid = h5g.create_async(self.id, name, lcpl=lcpl, gcpl=gcpl, es_id=esid)
             return Group(gid, es)
 
-    def create_dataset(self, name, shape=None, dtype=None, data=None, **kwds):
+
+    def create_dataset(self, name, shape=None, dtype=None, data=None, es=None, **kwds):
         """ Create a new HDF5 dataset
 
         name
@@ -189,30 +159,8 @@ class Group(HLObject, MutableMappingHDF5):
                 name = self._e(name)
                 if b'/' in name.lstrip(b'/'):
                     parent_path, name = name.rsplit(b'/', 1)
-                    group = self.require_group(parent_path)
-
-            dsid = dataset.make_new_dset(group, shape, dtype, data, name, **kwds)
-            dset = dataset.Dataset(dsid)
-            return dset
-	#IF HDF5_VERSION >= (1, 13, 0):
-    def create_dataset_async(self, name, shape=None, dtype=None, data=None, es=None, **kwds):
-        if (self.es_id is not None) and (es is None):
-            es=self.es_id
-        if 'track_order' not in kwds:
-            kwds['track_order'] = h5.get_config().track_order
-
-        if 'efile_prefix' in kwds:
-            kwds['efile_prefix'] = self._e(kwds['efile_prefix'])
-
-        if 'virtual_prefix' in kwds:
-            kwds['virtual_prefix'] = self._e(kwds['virtual_prefix'])
-        with phil:
-            group = self
-            if name:
-                name = self._e(name)
-                if b'/' in name.lstrip(b'/'):
-                    parent_path, name = name.rsplit(b'/', 1)
-                    group = self.require_group(parent_path)
+                    group = self.require_group(parent_path, es_id=es)
+            
             dsid = dataset.make_new_dset(group, shape, dtype, data, name, es_id=es, **kwds)
             dset = dataset.Dataset(dsid, es_id=es)
             return dset
@@ -309,10 +257,7 @@ class Group(HLObject, MutableMappingHDF5):
                 shape = (shape,)
 
             try:
-                if self.es_id is None:
-                    dsid = dataset.open_dset(self, self._e(name), **kwds)
-                else:
-                    dsid = dataset.open_dset_async(self, self._e(name), es_id=self.es_id.es_id, **kwds)
+                dsid = dataset.open_dset(self, self._e(name), es_id=es, **kwds)
                 dset = dataset.Dataset(dsid)
             except KeyError:
                 dset = self[name]
@@ -375,10 +320,7 @@ class Group(HLObject, MutableMappingHDF5):
         """
         with phil:
             if not name in self:
-                if es_id is None:
-                    return self.create_group(name)
-                else:
-                    return self.create_group_async(name, es=es_id)
+                return self.create_group(name, es_id=es_id)
             grp = self[name]
             if not isinstance(grp, Group):
                 raise TypeError("Incompatible object (%s) already exists" % grp.__class__.__name__)

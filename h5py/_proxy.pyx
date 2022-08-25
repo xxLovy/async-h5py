@@ -34,13 +34,13 @@ cdef herr_t attr_rw(hid_t attr, hid_t mtype, void *progbuf, int read, hid_t es_i
         atype = H5Aget_type(attr)
 
         if not (needs_proxy(atype) or needs_proxy(mtype)):
-            print("------------------------------------------------1")
             if read:
                 if es_id == 0:
                     H5Aread(attr, mtype, progbuf)
                 else:
                     print("Using H5Aread_async")
-                    H5Aread_async(attr, mtype, progbuf, es_id)
+                    #H5Aread_async(attr, mtype, progbuf, es_id)
+                    H5Aread(attr, atype, progbuf)
             else:
                 if es_id == 0:
                     H5Awrite(attr, mtype, progbuf)
@@ -49,7 +49,6 @@ cdef herr_t attr_rw(hid_t attr, hid_t mtype, void *progbuf, int read, hid_t es_i
                     H5Awrite_async(attr, mtype, progbuf, es_id)
 
         else:
-            print("------------------------------------------------2")
             asize = H5Tget_size(atype)
             msize = H5Tget_size(mtype)
             aspace = H5Aget_space(attr)
@@ -70,7 +69,8 @@ cdef herr_t attr_rw(hid_t attr, hid_t mtype, void *progbuf, int read, hid_t es_i
                     H5Aread(attr, atype, conv_buf)
                 else:
                     print("Using H5Aread_async")
-                    H5Aread_async(attr, atype, conv_buf, es_id)
+                    #H5Aread_async(attr, atype, conv_buf, es_id)
+                    H5Aread(attr, atype, conv_buf)
                 H5Tconvert(atype, mtype, npoints, conv_buf, back_buf, H5P_DEFAULT)
                 memcpy(progbuf, conv_buf, msize*npoints)
             else:
@@ -99,83 +99,6 @@ cdef herr_t attr_rw(hid_t attr, hid_t mtype, void *progbuf, int read, hid_t es_i
 
 
 cdef herr_t dset_rw(hid_t dset, hid_t mtype, hid_t mspace, hid_t fspace,
-                    hid_t dxpl, void* progbuf, int read) except -1:
-
-    cdef htri_t need_bkg
-    cdef hid_t dstype = -1      # Dataset datatype
-    cdef hid_t rawdstype = -1
-    cdef hid_t dspace = -1      # Dataset dataspace
-    cdef hid_t cspace = -1      # Temporary contiguous dataspaces
-
-    cdef void* back_buf = NULL
-    cdef void* conv_buf = NULL
-    cdef hsize_t npoints
-
-    try:
-        # Issue 372: when a compound type is involved, using the dataset type
-        # may result in uninitialized data being sent to H5Tconvert for fields
-        # not present in the memory type.  Limit the type used for the dataset
-        # to only those fields present in the memory type.  We can't use the
-        # memory type directly because of course that triggers HDFFV-1063.
-        if (H5Tget_class(mtype) == H5T_COMPOUND) and (not read):
-            rawdstype = H5Dget_type(dset)
-            dstype = make_reduced_type(mtype, rawdstype)
-            H5Tclose(rawdstype)
-        else:
-            dstype = H5Dget_type(dset)
-
-        if not (needs_proxy(dstype) or needs_proxy(mtype)):
-            if read:
-                H5Dread(dset, mtype, mspace, fspace, dxpl, progbuf)
-            else:
-                H5Dwrite(dset, mtype, mspace, fspace, dxpl, progbuf)
-        else:
-
-            if mspace == H5S_ALL and fspace != H5S_ALL:
-                mspace = fspace
-            elif mspace != H5S_ALL and fspace == H5S_ALL:
-                fspace = mspace
-            elif mspace == H5S_ALL and fspace == H5S_ALL:
-                fspace = mspace = dspace = H5Dget_space(dset)
-
-            npoints = H5Sget_select_npoints(mspace)
-            cspace = H5Screate_simple(1, &npoints, NULL)
-
-            conv_buf = create_buffer(H5Tget_size(dstype), H5Tget_size(mtype), npoints)
-
-            # Only create a (contiguous) backing buffer if absolutely
-            # necessary. Note this buffer always has memory type.
-            if read:
-                need_bkg = needs_bkg_buffer(dstype, mtype)
-            else:
-                need_bkg = needs_bkg_buffer(mtype, dstype)
-            if need_bkg:
-                back_buf = create_buffer(H5Tget_size(dstype), H5Tget_size(mtype), npoints)
-                h5py_copy(mtype, mspace, back_buf, progbuf, H5PY_GATHER)
-
-            if read:
-                H5Dread(dset, dstype, cspace, fspace, dxpl, conv_buf)
-                H5Tconvert(dstype, mtype, npoints, conv_buf, back_buf, dxpl)
-                h5py_copy(mtype, mspace, conv_buf, progbuf, H5PY_SCATTER)
-            else:
-                h5py_copy(mtype, mspace, conv_buf, progbuf, H5PY_GATHER)
-                H5Tconvert(mtype, dstype, npoints, conv_buf, back_buf, dxpl)
-                H5Dwrite(dset, dstype, cspace, fspace, dxpl, conv_buf)
-                H5Dvlen_reclaim(dstype, cspace, H5P_DEFAULT, conv_buf)
-
-    finally:
-        free(back_buf)
-        free(conv_buf)
-        if dstype > 0:
-            H5Tclose(dstype)
-        if dspace > 0:
-            H5Sclose(dspace)
-        if cspace > 0:
-            H5Sclose(cspace)
-
-    return 0
-
-cdef herr_t dset_rw_async(hid_t dset, hid_t mtype, hid_t mspace, hid_t fspace,
                     hid_t dxpl, void* progbuf, int read, hid_t es_id) except -1:
 
     cdef htri_t need_bkg
@@ -203,11 +126,18 @@ cdef herr_t dset_rw_async(hid_t dset, hid_t mtype, hid_t mspace, hid_t fspace,
 
         if not (needs_proxy(dstype) or needs_proxy(mtype)):
             if read:
-                H5Dread_async(dset, mtype, mspace, fspace, dxpl, progbuf, 0)
-                print('Using H5Dread_async')
+                if es_id == 0:
+                    H5Dread(dset, mtype, mspace, fspace, dxpl, progbuf)
+                else:
+                    print('Using H5Dread_async')
+                    H5Dread_async(dset, mtype, mspace, fspace, dxpl, progbuf, es_id)
             else:
-                H5Dwrite_async(dset, mtype, mspace, fspace, dxpl, progbuf, 0)
-                print('Using H5Dwrite_async')
+                if es_id == 0:
+                    H5Dwrite(dset, mtype, mspace, fspace, dxpl, progbuf)
+                else:
+                    print('Using H5Dwrite_async')
+                    H5Dwrite_async(dset, mtype, mspace, fspace, dxpl, progbuf, es_id)
+
         else:
 
             if mspace == H5S_ALL and fspace != H5S_ALL:
@@ -233,15 +163,21 @@ cdef herr_t dset_rw_async(hid_t dset, hid_t mtype, hid_t mspace, hid_t fspace,
                 h5py_copy(mtype, mspace, back_buf, progbuf, H5PY_GATHER)
 
             if read:
-                H5Dread_async(dset, dstype, cspace, fspace, dxpl, conv_buf, 0)
-                print('Using H5Dread_async')
+                if es_id == 0:
+                    H5Dread(dset, dstype, cspace, fspace, dxpl, conv_buf)
+                else:
+                    print('Using H5Dread_async')
+                    H5Dread_async(dset, dstype, cspace, fspace, dxpl, conv_buf, es_id)
                 H5Tconvert(dstype, mtype, npoints, conv_buf, back_buf, dxpl)
                 h5py_copy(mtype, mspace, conv_buf, progbuf, H5PY_SCATTER)
             else:
                 h5py_copy(mtype, mspace, conv_buf, progbuf, H5PY_GATHER)
                 H5Tconvert(mtype, dstype, npoints, conv_buf, back_buf, dxpl)
-                H5Dwrite_async(dset, dstype, cspace, fspace, dxpl, conv_buf, 0)
-                print('Using H5Dwrite_async')
+                if es_id == 0:
+                    H5Dwrite(dset, dstype, cspace, fspace, dxpl, conv_buf)
+                else:
+                    print('Using H5Dwrite_async')
+                    H5Dwrite_async(dset, dstype, cspace, fspace, dxpl, conv_buf, es_id)
                 H5Dvlen_reclaim(dstype, cspace, H5P_DEFAULT, conv_buf)
 
     finally:
@@ -255,6 +191,7 @@ cdef herr_t dset_rw_async(hid_t dset, hid_t mtype, hid_t mspace, hid_t fspace,
             H5Sclose(cspace)
 
     return 0
+    
 
 cdef hid_t make_reduced_type(hid_t mtype, hid_t dstype):
     # Go through dstype, pick out the fields which also appear in mtype, and
