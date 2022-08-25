@@ -59,7 +59,6 @@ from ._hl import filters
 from ._hl.base import is_hdf5, HLObject, Empty
 from ._hl.files import (
     File,
-    File_async,
     register_driver,
     unregister_driver,
     registered_drivers,
@@ -82,12 +81,14 @@ from .h5s import UNLIMITED
 
 from .version import version as __version__
 
-from ._hl.eventset import Eventset
 
 
 if version.hdf5_version_tuple[:3] >= get_config().vds_min_hdf5_version:
     from ._hl.vds import VirtualSource, VirtualLayout
 
+if version.hdf5_version_tuple[:3] >= (1, 13, 0):
+    from ._hl.eventset import Eventset
+    from . import h5es
 
 def run_tests(args=''):
     """Run tests with pytest and returns the exit status as an int.

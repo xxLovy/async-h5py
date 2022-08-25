@@ -628,7 +628,4 @@ class File(Group):
 
         return r
 
-class File_async(File):
-    pass
-
 

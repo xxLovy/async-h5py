@@ -44,18 +44,13 @@ hdf5:
   # === H5A - Attributes API ==================================================
 
   hid_t     H5Acreate(hid_t loc_id, char *name, hid_t type_id, hid_t space_id, hid_t acpl_id, hid_t aapl_id)
-  hid_t     H5Acreate_async(hid_t loc_id, const char *attr_name, hid_t type_id, hid_t space_id, hid_t acpl_id, hid_t aapl_id, hid_t es_id)
-
   hid_t     H5Aopen_idx(hid_t loc_id, unsigned int idx)
   hid_t     H5Aopen_name(hid_t loc_id, char *name)
   herr_t    H5Aclose(hid_t attr_id)
-  herr_t    H5Aclose_async(hid_t attr_id, hid_t es_id);
   herr_t    H5Adelete(hid_t loc_id, char *name)
 
   herr_t    H5Aread(hid_t attr_id, hid_t mem_type_id, void *buf)
-  herr_t    H5Aread_async(hid_t attr_id, hid_t dtype_id, void *buf, hid_t es_id)
   herr_t    H5Awrite(hid_t attr_id, hid_t mem_type_id, void *buf )
-  herr_t    H5Awrite_async(hid_t attr_id, hid_t type_id, const void *buf, hid_t es_id)
 
   int       H5Aget_num_attrs(hid_t loc_id)
   ssize_t   H5Aget_name(hid_t attr_id, size_t buf_size, char *buf)
@@ -66,23 +61,15 @@ hdf5:
   herr_t    H5Adelete_by_idx(hid_t loc_id, char *obj_name, H5_index_t idx_type, H5_iter_order_t order, hsize_t n, hid_t lapl_id)
 
   hid_t     H5Acreate_by_name(hid_t loc_id, char *obj_name, char *attr_name, hid_t type_id, hid_t space_id, hid_t acpl_id, hid_t aapl_id, hid_t lapl_id)
-  hid_t     H5Acreate_by_name_async(hid_t loc_id, const char *obj_name, const char *attr_name, hid_t type_id, hid_t space_id, hid_t acpl_id, hid_t aapl_id, hid_t lapl_id, hid_t es_id);
 
   hid_t     H5Aopen(hid_t obj_id, char *attr_name, hid_t aapl_id)
-  hid_t     H5Aopen_async(hid_t obj_id, const char *attr_name, hid_t aapl_id, hid_t es_id)
   hid_t     H5Aopen_by_name( hid_t loc_id, char *obj_name, char *attr_name, hid_t aapl_id, hid_t lapl_id)
-  hid_t     H5Aopen_by_name_async(hid_t loc_id, const char *obj_name, const char *attr_name, hid_t aapl_id, hid_t lapl_id, hid_t es_id)
   hid_t     H5Aopen_by_idx(hid_t loc_id, char *obj_name, H5_index_t idx_type, H5_iter_order_t order, hsize_t n, hid_t aapl_id, hid_t lapl_id)
-  hid_t     H5Aopen_by_idx_async(hid_t loc_id, const char *obj_name, H5_index_t idx_type, H5_iter_order_t order, hsize_t n, hid_t aapl_id, hid_t lapl_id, hid_t es_id)
   htri_t    H5Aexists_by_name( hid_t loc_id, char *obj_name, char *attr_name, hid_t lapl_id)
-  herr_t    H5Aexists_by_name_async(hid_t loc_id, const char *obj_name, const char *attr_name, hbool_t *exists, hid_t lapl_id, hid_t es_id)
   htri_t    H5Aexists(hid_t obj_id, char *attr_name)
-  herr_t    H5Aexists_async(hid_t obj_id, const char *attr_name, hbool_t *exists, hid_t es_id)
 
   herr_t    H5Arename(hid_t loc_id, char *old_attr_name, char *new_attr_name)
-  herr_t    H5Arename_async(hid_t loc_id, const char *old_name, const char *new_name, hid_t es_id)
   herr_t    H5Arename_by_name(hid_t loc_id, char *obj_name, char *old_attr_name, char *new_attr_name, hid_t lapl_id)
-  herr_t    H5Arename_by_name_async(hid_t loc_id, const char *obj_name, const char *old_attr_name, const char *new_attr_name, hid_t lapl_id, hid_t es_id);
 
   herr_t    H5Aget_info( hid_t attr_id, H5A_info_t *ainfo)
   herr_t    H5Aget_info_by_name(hid_t loc_id, char *obj_name, char *attr_name, H5A_info_t *ainfo, hid_t lapl_id)
@@ -90,20 +77,31 @@ hdf5:
 
   herr_t    H5Aiterate(hid_t obj_id, H5_index_t idx_type, H5_iter_order_t order, hsize_t *n, H5A_operator2_t op, void *op_data)
   hsize_t   H5Aget_storage_size(hid_t attr_id)
+  
+  # H5A async functions
+  1.13.0    hid_t     H5Acreate_by_name_async(hid_t loc_id, const char *obj_name, const char *attr_name, hid_t type_id, hid_t space_id, hid_t acpl_id, hid_t aapl_id, hid_t lapl_id, hid_t es_id);
+  1.13.0    hid_t     H5Acreate_async(hid_t loc_id, const char *attr_name, hid_t type_id, hid_t space_id, hid_t acpl_id, hid_t aapl_id, hid_t es_id)
+  1.13.0    herr_t    H5Aclose_async(hid_t attr_id, hid_t es_id)
+  1.13.0    hid_t     H5Aopen_async(hid_t obj_id, const char *attr_name, hid_t aapl_id, hid_t es_id)
+  1.13.0    hid_t     H5Aopen_by_name_async(hid_t loc_id, const char *obj_name, const char *attr_name, hid_t aapl_id, hid_t lapl_id, hid_t es_id)
+  1.13.0    hid_t     H5Aopen_by_idx_async(hid_t loc_id, const char *obj_name, H5_index_t idx_type, H5_iter_order_t order, hsize_t n, hid_t aapl_id, hid_t lapl_id, hid_t es_id)
+  1.13.0    herr_t    H5Aexists_by_name_async(hid_t loc_id, const char *obj_name, const char *attr_name, hbool_t *exists, hid_t lapl_id, hid_t es_id)
+  1.13.0    herr_t    H5Aexists_async(hid_t obj_id, const char *attr_name, hbool_t *exists, hid_t es_id)
+  1.13.0    herr_t    H5Arename_by_name_async(hid_t loc_id, const char *obj_name, const char *old_attr_name, const char *new_attr_name, hid_t lapl_id, hid_t es_id)
+  1.13.0    herr_t    H5Arename_async(hid_t loc_id, const char *old_name, const char *new_name, hid_t es_id)
+  1.13.0    herr_t    H5Awrite_async(hid_t attr_id, hid_t type_id, const void *buf, hid_t es_id)
+  1.13.0    herr_t    H5Aread_async(hid_t attr_id, hid_t dtype_id, void *buf, hid_t es_id)
 
 
   # === H5D - Dataset API =====================================================
 
   hid_t     H5Dcreate(hid_t loc_id, char *name, hid_t type_id, hid_t space_id, hid_t lcpl_id, hid_t dcpl_id, hid_t dapl_id) nogil
-  hid_t     H5Dcreate_async(hid_t loc_id, const char *name, hid_t type_id, hid_t space_id, hid_t lcpl_id, hid_t dcpl_id, hid_t dapl_id, hid_t es_id)
   hid_t     H5Dcreate_anon(hid_t file_id, hid_t type_id, hid_t space_id, hid_t plist_id, hid_t dapl_id) nogil
 
   hid_t     H5Dopen(hid_t loc_id, char *name, hid_t dapl_id )
-  hid_t     H5Dopen_async(hid_t loc_id, const char *name, hid_t dapl_id, hid_t es_id)
   herr_t    H5Dclose(hid_t dset_id)
 
   hid_t     H5Dget_space(hid_t dset_id)
-  hid_t     H5Dget_space_async(hid_t dset_id, hid_t es_id)
   herr_t    H5Dget_space_status(hid_t dset_id, H5D_space_status_t *status)
   hid_t     H5Dget_type(hid_t dset_id)
   hid_t     H5Dget_create_plist(hid_t dataset_id)
@@ -113,10 +111,7 @@ hdf5:
   hsize_t   H5Dget_storage_size(hid_t dset_id)
 
   herr_t    H5Dread(hid_t dset_id, hid_t mem_type_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, void *buf) nogil
-  herr_t    H5Dread_async(hid_t dset_id, hid_t mem_type_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, void *buf, hid_t es_id) nogil
   herr_t    H5Dwrite(hid_t dset_id, hid_t mem_type, hid_t mem_space, hid_t file_space, hid_t xfer_plist, void* buf) nogil
-  herr_t    H5Dwrite_async(hid_t dset_id, hid_t mem_type, hid_t mem_space, hid_t file_space, hid_t xfer_plist, void* buf, hid_t es_id) nogil
-
 
   herr_t    H5Dextend(hid_t dataset_id, hsize_t *size) nogil
 
@@ -126,7 +121,7 @@ hdf5:
 
   herr_t    H5Diterate(void *buf, hid_t type_id, hid_t space_id,  H5D_operator_t op, void* operator_data) nogil
   herr_t    H5Dset_extent(hid_t dset_id, hsize_t* size) nogil
-  herr_t    H5Dset_extent_async(hid_t dset_id, hsize_t* size, hid_t es_id)
+
   # SWMR functions
   1.9.178   herr_t H5Dflush(hid_t dataset_id) nogil
   1.9.178   herr_t H5Drefresh(hid_t dataset_id) nogil
@@ -142,7 +137,15 @@ hdf5:
   1.10.5    herr_t H5Dget_chunk_info(hid_t dset_id, hid_t fspace_id, hsize_t chk_idx, hsize_t *offset, unsigned *filter_mask, haddr_t *addr, hsize_t *size)
   1.10.5    herr_t H5Dget_chunk_info_by_coord(hid_t dset_id, const hsize_t *offset, unsigned *filter_mask, haddr_t *addr, hsize_t *size)
 
-
+  # H5D async functions
+  1.13.0    hid_t     H5Dcreate_async(hid_t loc_id, const char *name, hid_t type_id, hid_t space_id, hid_t lcpl_id, hid_t dcpl_id, hid_t dapl_id, hid_t es_id)
+  1.13.0    hid_t     H5Dopen_async(hid_t loc_id, const char *name, hid_t dapl_id, hid_t es_id)
+  1.13.0    hid_t     H5Dget_space_async(hid_t dset_id, hid_t es_id)
+  1.13.0    herr_t    H5Dread_async(hid_t dset_id, hid_t mem_type_id, hid_t mem_space_id, hid_t file_space_id, hid_t plist_id, void *buf, hid_t es_id) nogil
+  1.13.0    herr_t    H5Dwrite_async(hid_t dset_id, hid_t mem_type, hid_t mem_space, hid_t file_space, hid_t xfer_plist, void* buf, hid_t es_id) nogil
+  1.13.0    herr_t    H5Dset_extent_async(hid_t dset_id, hsize_t* size, hid_t es_id)
+  
+  
   # === H5E - Minimal error-handling interface ================================
 
   # The error interfaces used by h5py are exposed directly through Cython
@@ -152,16 +155,12 @@ hdf5:
   # === H5F - File API ========================================================
 
   hid_t     H5Fcreate(char *filename, unsigned int flags, hid_t create_plist, hid_t access_plist)
-  hid_t     H5Fcreate_async(const char *filename, unsigned flags, hid_t fcpl_id, hid_t fapl_id, hid_t es_id)
   hid_t     H5Fopen(char *name, unsigned flags, hid_t access_id)
-  hid_t H5Fopen_async(const char *filename, unsigned flags, hid_t fapl_id, hid_t es_id)
   herr_t    H5Fclose (hid_t file_id)
-  herr_t    H5Fclose_async (hid_t file_id, hid_t es_id)
   htri_t    H5Fis_hdf5(char *name)
   herr_t    H5Fflush(hid_t object_id, H5F_scope_t scope) nogil
-  herr_t    H5Fflush_async(hid_t object_id, H5F_scope_t scope, hid_t es_id)
+
   hid_t     H5Freopen(hid_t file_id)
-  hid_t     H5Freopen_async(hid_t file_id, hid_t es_id)
   herr_t    H5Fmount(hid_t loc_id, char *name, hid_t child_id, hid_t plist_id)
   herr_t    H5Funmount(hid_t loc_id, char *name)
   herr_t    H5Fget_filesize(hid_t file_id, hsize_t *size)
@@ -194,6 +193,14 @@ hdf5:
   # Page Buffering functions
   1.10.1 herr_t    H5Freset_page_buffering_stats(hid_t file_id)
   1.10.1 herr_t    H5Fget_page_buffering_stats(hid_t file_id, unsigned *accesses, unsigned *hits, unsigned *misses, unsigned *evictions, unsigned *bypasses)
+  
+  # H5F async functions
+  1.13.0    hid_t     H5Fcreate_async(const char *filename, unsigned flags, hid_t fcpl_id, hid_t fapl_id, hid_t es_id)
+  1.13.0    hid_t     H5Fopen_async(const char *filename, unsigned flags, hid_t fapl_id, hid_t es_id)
+  1.13.0    herr_t    H5Fclose_async (hid_t file_id, hid_t es_id)
+  1.13.0    herr_t    H5Fflush_async(hid_t object_id, H5F_scope_t scope, hid_t es_id)
+  1.13.0    hid_t     H5Freopen_async(hid_t file_id, hid_t es_id)
+
 
   # === H5FD - Virtual File Layer =========================================================
 
@@ -221,13 +228,14 @@ hdf5:
 
   hid_t     H5Gcreate_anon( hid_t loc_id, hid_t gcpl_id, hid_t gapl_id)
   hid_t     H5Gcreate(hid_t loc_id, char *name, hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id)
-  hid_t     H5Gcreate_async(hid_t loc_id, const char *name, hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id, hid_t es_id)
   hid_t     H5Gopen( hid_t loc_id, char * name, hid_t gapl_id)
-  hid_t     H5Gopen_async(hid_t loc_id, const char *name, hid_t gapl_id, hid_t es_id)
   herr_t    H5Gget_info( hid_t group_id, H5G_info_t *group_info)
   herr_t    H5Gget_info_by_name( hid_t loc_id, char *group_name, H5G_info_t *group_info, hid_t lapl_id)
   hid_t     H5Gget_create_plist(hid_t group_id)
 
+  # H5G async functions
+  1.13.0    hid_t     H5Gcreate_async(hid_t loc_id, const char *name, hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id, hid_t es_id)
+  1.13.0    hid_t     H5Gopen_async(hid_t loc_id, const char *name, hid_t gapl_id, hid_t es_id)
 
   # === H5I - Identifier and reflection interface =============================
 
@@ -245,13 +253,9 @@ hdf5:
   herr_t    H5Lmove(hid_t src_loc, char *src_name, hid_t dst_loc, char *dst_name, hid_t lcpl_id, hid_t lapl_id)
   herr_t    H5Lcopy(hid_t src_loc, char *src_name, hid_t dst_loc, char *dst_name, hid_t lcpl_id, hid_t lapl_id)
   herr_t    H5Lcreate_hard(hid_t cur_loc, char *cur_name, hid_t dst_loc, char *dst_name, hid_t lcpl_id, hid_t lapl_id)
-   herr_t    H5Lcreate_hard_async(hid_t cur_loc, char *cur_name, hid_t dst_loc, char *dst_name, hid_t lcpl_id, hid_t lapl_id, hid_t es_id)
   herr_t    H5Lcreate_soft(char *link_target, hid_t link_loc_id, char *link_name, hid_t lcpl_id, hid_t lapl_id)
-  herr_t    H5Lcreate_soft_async(char *link_target, hid_t link_loc_id, char *link_name, hid_t lcpl_id, hid_t lapl_id, hid_t es_id)
   herr_t    H5Ldelete(hid_t loc_id, char *name, hid_t lapl_id)
-  herr_t    H5Ldelete_async(hid_t loc_id, char *name, hid_t lapl_id, hid_t es_id)
   herr_t    H5Ldelete_by_idx(hid_t loc_id, char *group_name, H5_index_t idx_type, H5_iter_order_t order, hsize_t n, hid_t lapl_id)
-  herr_t    H5Ldelete_by_idx_async(hid_t loc_id, char *group_name, H5_index_t idx_type, H5_iter_order_t order, hsize_t n, hid_t lapl_id, hid_t es_id)
   herr_t    H5Lget_val(hid_t loc_id, char *name, void *bufout, size_t size, hid_t lapl_id)
   herr_t    H5Lget_val_by_idx(hid_t loc_id, char *group_name,  H5_index_t idx_type, H5_iter_order_t order, hsize_t n, void *bufout, size_t size, hid_t lapl_id)
   htri_t    H5Lexists(hid_t loc_id, char *name, hid_t lapl_id)
@@ -259,22 +263,25 @@ hdf5:
   herr_t    H5Lget_info_by_idx(hid_t loc_id, char *group_name, H5_index_t idx_type, H5_iter_order_t order, hsize_t n, H5L_info_t *linfo, hid_t lapl_id)
   ssize_t   H5Lget_name_by_idx(hid_t loc_id, char *group_name, H5_index_t idx_type, H5_iter_order_t order, hsize_t n, char *name, size_t size, hid_t lapl_id)
   herr_t    H5Literate(hid_t grp_id, H5_index_t idx_type, H5_iter_order_t order, hsize_t *idx, H5L_iterate_t op, void *op_data)
-  herr_t    H5Literate_async(hid_t grp_id, H5_index_t idx_type, H5_iter_order_t order, hsize_t *idx, H5L_iterate_t op, void *op_data, hid_t es_id)
   herr_t    H5Literate_by_name(hid_t loc_id, char *group_name, H5_index_t idx_type, H5_iter_order_t order, hsize_t *idx, H5L_iterate_t op, void *op_data, hid_t lapl_id)
   herr_t    H5Lvisit(hid_t grp_id, H5_index_t idx_type, H5_iter_order_t order, H5L_iterate_t op, void *op_data)
   herr_t    H5Lvisit_by_name(hid_t loc_id, char *group_name, H5_index_t idx_type, H5_iter_order_t order, H5L_iterate_t op, void *op_data, hid_t lapl_id)
   herr_t    H5Lunpack_elink_val(void *ext_linkval, size_t link_size, unsigned *flags, const char **filename, const char **obj_path)
   herr_t    H5Lcreate_external(char *file_name, char *obj_name, hid_t link_loc_id, char *link_name, hid_t lcpl_id, hid_t lapl_id)
 
+  # H5L async functions
+  1.13.0    herr_t    H5Lcreate_hard_async(hid_t cur_loc, char *cur_name, hid_t dst_loc, char *dst_name, hid_t lcpl_id, hid_t lapl_id, hid_t es_id)
+  1.13.0    herr_t    H5Lcreate_soft_async(char *link_target, hid_t link_loc_id, char *link_name, hid_t lcpl_id, hid_t lapl_id, hid_t es_id)
+  1.13.0    herr_t    H5Ldelete_async(hid_t loc_id, char *name, hid_t lapl_id, hid_t es_id)
+  1.13.0    herr_t    H5Ldelete_by_idx_async(hid_t loc_id, char *group_name, H5_index_t idx_type, H5_iter_order_t order, hsize_t n, hid_t lapl_id, hid_t es_id)
+  1.13.0    herr_t    H5Literate_async(hid_t grp_id, H5_index_t idx_type, H5_iter_order_t order, hsize_t *idx, H5L_iterate_t op, void *op_data, hid_t es_id)
 
 
   # === H5O - General object operations =======================================
 
   hid_t     H5Oopen(hid_t loc_id, char *name, hid_t lapl_id)
-  hid_t     H5Oopen_async(hid_t loc_id, char *name, hid_t lapl_id, hid_t es_id)
   hid_t     H5Oopen_by_addr(hid_t loc_id, haddr_t addr)
   hid_t     H5Oopen_by_idx(hid_t loc_id, char *group_name, H5_index_t idx_type, H5_iter_order_t order, hsize_t n, hid_t lapl_id)
-  hid_t     H5Oopen_by_idx_async(hid_t loc_id, char *group_name, H5_index_t idx_type, H5_iter_order_t order, hsize_t n, hid_t lapl_id, hid_t es_id)
 
   herr_t    H5Oget_info(hid_t loc_id, H5O_info_t *oinfo)
   herr_t    H5Oget_info_by_name(hid_t loc_id, char *name, H5O_info_t *oinfo, hid_t lapl_id)
@@ -282,7 +289,6 @@ hdf5:
 
   herr_t    H5Olink(hid_t obj_id, hid_t new_loc_id, char *new_name, hid_t lcpl_id, hid_t lapl_id)
   herr_t    H5Ocopy(hid_t src_loc_id, char *src_name, hid_t dst_loc_id,  char *dst_name, hid_t ocpypl_id, hid_t lcpl_id)
-  herr_t    H5Ocopy_async(hid_t src_loc_id, char *src_name, hid_t dst_loc_id,  char *dst_name, hid_t ocpypl_id, hid_t lcpl_id, hid_t es_id)
 
   herr_t    H5Oincr_refcount(hid_t object_id)
   herr_t    H5Odecr_refcount(hid_t object_id)
@@ -296,12 +302,15 @@ hdf5:
   herr_t    H5Ovisit_by_name(hid_t loc_id, char *obj_name, H5_index_t idx_type, H5_iter_order_t order, H5O_iterate_t op, void *op_data, hid_t lapl_id)
 
   herr_t    H5Oclose(hid_t object_id)
-  herr_t    H5Oclose_async(hid_t object_id, hid_t es_id)
-
 
   # Version-limited functions
   1.8.5 htri_t H5Oexists_by_name(hid_t loc_id, char * name, hid_t lapl_id )
 
+  # H5L async functions
+  1.13.0    hid_t     H5Oopen_async(hid_t loc_id, char *name, hid_t lapl_id, hid_t es_id)
+  1.13.0    hid_t     H5Oopen_by_idx_async(hid_t loc_id, char *group_name, H5_index_t idx_type, H5_iter_order_t order, hsize_t n, hid_t lapl_id, hid_t es_id)
+  1.13.0    herr_t    H5Ocopy_async(hid_t src_loc_id, char *src_name, hid_t dst_loc_id,  char *dst_name, hid_t ocpypl_id, hid_t lcpl_id, hid_t es_id)
+  1.13.0    herr_t    H5Oclose_async(hid_t object_id, hid_t es_id)
 
   # === H5P - Property list API ===============================================
 
@@ -638,12 +647,10 @@ hdf5_hl:
   ssize_t H5DSget_scale_name(hid_t did, char *name, size_t size)
   htri_t  H5DSis_scale(hid_t did)
   herr_t  H5DSiterate_scales(hid_t did, unsigned int dim, int *idx, H5DS_iterate_t visitor, void *visitor_data)
-  
+
+
   # === H5ES - Event Set API =============================================
 
-  hid_t   H5EScreate()
-  herr_t  H5ESwait(hid_t es_id, uint64_t timeout, size_t *num_in_progress, hbool_t *op_failed)
-  herr_t  H5ESclose(hid_t es_id)
-
-
-
+  1.13.0    hid_t   H5EScreate()
+  1.13.0    herr_t  H5ESwait(hid_t es_id, uint64_t timeout, size_t *num_in_progress, hbool_t *op_failed)
+  1.13.0    herr_t  H5ESclose(hid_t es_id)
